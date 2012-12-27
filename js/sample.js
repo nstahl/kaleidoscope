@@ -19,12 +19,12 @@ var drawLogo = function() {
 
 console.log('Setup');
 
-var width = 600
-    height = 600
+var width = 500,
+    height = 500,
     padding = 0;
     
 var color = d3.scale.category20();
-var imgPath = 'img/2621.JPG';
+var imgPath = "data/2621.JPG";
 
 var svg = d3.select('#image')
           .append('svg')
@@ -32,11 +32,13 @@ var svg = d3.select('#image')
             .attr('height', height)
             .attr('id', 'imageSVG');
 
-    svg.append('g')
+ var srcImage = svg.append('g')
         .attr('id', 'imageGroup')
-      .append('svg:img')
+        .attr("transform", "translate(" + (padding/2) + "," + (padding/2) + ")")
+      .append('svg:image')
         .attr('x', 0)
-        .attr('y', 0)      
+        .attr('y', 0)
+        .attr("class", "dot")
         .attr('width', 300)
         .attr('height', 300)
         .attr('xlink:href', imgPath);
