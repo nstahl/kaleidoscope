@@ -24,7 +24,8 @@ var drag = d3.behavior.drag()
     .on("drag", dragmove);
     
 var color = d3.scale.category20();
-var imgPath = "data/2621.JPG";
+//var imgPath = "data/2621.JPG";
+var imgPath = "data/test.jpg";
 
 //sampler setup//
 var svg = d3.select('#image')
@@ -35,7 +36,6 @@ var svg = d3.select('#image')
 
 //add def tag
 var defsTag = svg.append('defs');
-
 
 var srcImage = svg.append('g')
       .attr('id', 'imageGroup')
@@ -54,7 +54,7 @@ var srcImage = svg.append('g')
 //define what path for clipping
 var pieAngle = Math.PI/4;
 var pieStartAngle = Math.PI/2;
-var arcOrigin = {x: width/3, y:height/3};
+var arcOrigin = {x: width/4, y:height/3};
 var arc = d3.svg.arc();
 var arcObj = {innerRadius: 0,
               outerRadius: 200,
@@ -77,6 +77,27 @@ clipTag.selectAll('path').data([arcObj])
         .attr('class', 'geom')
         .attr('d', function(d) {return arc(d);});
 
+//hidden
+
+
+var clipTag = defsTag.append('clipPath')
+                      .attr('id', 'theHiddenClipPath')
+                      .attr("transform", "translate(" + 0 + "," + 0 + ")");
+
+clipTag.selectAll('path').data([arcObj])
+  .enter().append('path')
+        .attr('class', 'geom')
+        .attr('d', function(d) {return arc(d);});
+
+defsTag.append('svg:image')
+      .attr('id', 'theHiddenImage')
+      .attr('x', -arcOrigin.x)
+      .attr('y', -arcOrigin.y)
+      .attr('width', width)
+      .attr('height', height)
+      .attr('clip-path', 'url(#theHiddenClipPath)');
+
+
 //draw clipping path for reference
 svg.append('g')
     .attr('id', 'refGroup')
@@ -85,7 +106,15 @@ svg.append('g')
     .attr('xlink:href', '#arcPath')
     .attr('class', 'geom');
 
+svg.append('svg:use')
+    .attr('id', 'new')
+    .attr('transform', 'translate(10,10)')
+    .attr('xlink:href', '#theHiddenImage')
+    .attr('opacity', 1)
+    .call(drag);
 
+
+/*
 //add clipped image
 svg.append('svg:use')
     .attr('id', 'wedge')
@@ -94,8 +123,8 @@ svg.append('svg:use')
     .attr('clip-path', 'url(#theClipPath)')
     .call(drag);
 
+
 //kaleidoscope//
-//sampler setup//
 var kSvg = d3.select('#kaleidoscope')
           .append('svg')
             .attr('width', width)

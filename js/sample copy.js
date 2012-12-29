@@ -94,8 +94,8 @@ svg.append('svg:use')
     .attr('clip-path', 'url(#theClipPath)')
     .call(drag);
 
+
 //kaleidoscope//
-//sampler setup//
 var kSvg = d3.select('#kaleidoscope')
           .append('svg')
             .attr('width', width)
