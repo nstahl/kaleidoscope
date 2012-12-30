@@ -15,57 +15,6 @@ function dragmove(d) {
       //.attr("cy", d.y = Math.max(radius, Math.min(height - radius, d3.event.y)));
 }
 
-function addImage(parentTag, name, alpha) {
-
-    return parentTag.append('svg:image')
-      .attr('id', name)
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr("class", "dot")
-      .attr('width', width)
-      .attr('height', height)
-      .attr('opacity', alpha)
-      .attr('xlink:href', imgPath);
-
-}
-
-function addPath(parentTag, name) {
-  return parentTag.selectAll('path').data([arcObj])
-    .enter().append('path')
-          .attr('id', name)
-          .attr('class', 'geom')
-          .attr('d', function(d) {return arc(d);});
-}
-
-function addPathWithOrigin(parentTag, name, origin) {
-
-  return parentTag.selectAll('path').data([arcObj])
-    .enter().append('path')
-          .attr('id', name)
-          .attr('class', 'geom')
-          .attr('transform', 'translate(' + origin.x + ',' + origin.y + ')')
-          .attr('d', function(d) {return arc(d);});
-}
-
-function addPathWithOriginScale(parentTag, name, origin, scaleFactor) {
-  var transformText = 'scale(' + scaleFactor.x + ',' + scaleFactor.y + ') ';
-  transformText += 'translate(' + origin.x + ',' + origin.y + ')';
-
-  return parentTag.selectAll('path').data([arcObj])
-    .enter().append('path')
-          .attr('id', name)
-          .attr('class', 'geom')
-          .attr('transform', transformText)
-          .attr('d', function(d) {return arc(d);});
-}
-
-function addClipPath(parentTag, name, origin, scaleFactor) {
-
-var toReturn = parentTag.append('clipPath')
-                      .attr('id', name);
-    addPathWithOriginScale(toReturn, name+'Path', origin, scaleFactor);                   
-}
-
 //exec
 
 console.log('Setup');
@@ -81,6 +30,30 @@ var drag = d3.behavior.drag()
 var color = d3.scale.category20();
 var imgPath = "data/2621.JPG";
 
+//sampler setup//
+var svg = d3.select('#image')
+          .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .attr('id', 'imageSVG');
+
+//add def tag
+var defsTag = svg.append('defs');
+
+
+var srcImage = svg.append('g')
+      .attr('id', 'imageGroup')
+      .attr('opacity', .5)
+      .attr("transform", "translate(" + (padding/2) + "," + (padding/2) + ")")
+    .append('svg:image')
+      .attr('id', 'theImage')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr("class", "dot")
+      .attr('width', width)
+      .attr('height', height)
+      .attr('xlink:href', imgPath);
+
 //define what path for clipping
 var pieAngle = Math.PI/4;
 var pieStartAngle = Math.PI/2;
@@ -92,90 +65,11 @@ var arcObj = {innerRadius: 0,
               endAngle: pieStartAngle+pieAngle};
 
 
-//ACTUAL DIV//
-//add image with no transformation
-var svg = d3.select('#image')
-          .append('svg')
-            .attr('width', width)
-            .attr('height', height);
-
-addImage(svg, 'imageMain', .5);
-//draw path for reference
-var tempGroup = svg.append('g')
-    .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")");
-addPath(tempGroup, 'refPath');
-
-//add clipped image
-var clipImage = addImage(svg, 'clippedImage', 1);
-addClipPath(svg, 'myClipper', arcOrigin, {x:1, y:1});
-clipImage.attr('clip-path', 'url(#myClipper)');
-
-
-
-//MIRROR DIV//
-var svgMirror = d3.select('#mirrorsample')
-          .append('svg')
-            .attr('width', width)
-            .attr('height', height);
-            /*
-          .append('g')
-            .attr('transform', 'scale(1,-1) translate(0, ' + (-height) + ')');*/
-
-
-var mirrorImage = addImage(svgMirror, 'imageMirror', .5);
-mirrorImage.attr('transform', 'scale(1,-1) translate(0, ' + (-height) + ')');
-
-var mirrorOrigin = {x: arcOrigin.x, y: (arcOrigin.y-height)};
-
-var refPath = addPathWithOriginScale(svgMirror, 'refPathMirror', mirrorOrigin, {x:1, y:-1});
-
-var mirrorClipImage = addImage(svgMirror, 'imageMirror', 1);
-mirrorClipImage.attr('transform', 'scale(1,-1) translate(0, ' + (-height) + ')');
-
-var arcCentroidY = arcObj.outerRadius*Math.sin(pieAngle)/2;//arc.centroid(arcObj)[1];
-var diff = Math.abs((arcOrigin.y+arcCentroidY)-height/2);
-addClipPath(svgMirror, 'myMirrorClipper', {x:arcOrigin.x, y: arcOrigin.y+2*diff}, {x:1, y:1});
-mirrorClipImage.attr('clip-path', 'url(#myMirrorClipper)');
-
- //{x: arcOrigin.x, y: (arcOrigin.y-height)}, {x:1, y:-1});
-
-/*
-//add clipped image
-var arcCentroidY = arc.centroid(arcObj)[1];
-var clipImageMirror = addImage(groupMirror, 'clippedImageMirror', 1);
-addClipPath(groupMirror, 'myClipperMirror', arcOrigin);
-clipImageMirror.attr('clip-path', 'url(#myClipperMirror)');
-
-
-/*
-//add clipped image
-svg.append('svg:use')
-    .attr('id', 'wedge')
-    .attr('xlink:href', '#theImage')
-    .attr('opacity', 1)
-    .attr('clip-path', 'url(#theClipPath)')
-    .call(drag);
-
-//mirrored//
-//sampler setup//
-var mSvgGroup = d3.select('#mirrorsample')
-          .append('svg')
-            .attr('width', width)
-            .attr('height', height)
-            .attr('id', 'kSvg')
-          .append('g')
-            .attr('transform', 'scale(1,-1) translate(0, -' +height +')');
-
-mSvgGroup.append('svg:image')
-  .attr('id', 'theKaleidoImage')
-  .attr('x', 0)
-  .attr('y', 0)
-  .attr("class", "dot")
-  .attr('width', width)
-  .attr('height', height)
-  .attr('xlink:href', imgPath);
-
-/*
+var pathTag = defsTag.selectAll('path').data([arcObj])
+  .enter().append('path')
+        .attr('id', 'arcPath')
+        .attr('class', 'geom')
+        .attr('d', function(d) {return arc(d);});
 
 var clipTag = defsTag.append('clipPath')
                       .attr('id', 'theClipPath')
@@ -185,6 +79,50 @@ clipTag.selectAll('path').data([arcObj])
   .enter().append('path')
         .attr('class', 'geom')
         .attr('d', function(d) {return arc(d);});
+
+//draw clipping path for reference
+svg.append('g')
+    .attr('id', 'refGroup')
+    .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")")
+  .append('svg:use')
+    .attr('xlink:href', '#arcPath')
+    .attr('class', 'geom');
+
+
+//add clipped image
+svg.append('svg:use')
+    .attr('id', 'wedge')
+    .attr('xlink:href', '#theImage')
+    .attr('opacity', 1)
+    .attr('clip-path', 'url(#theClipPath)')
+    .call(drag);
+
+//kaleidoscope//
+//sampler setup//
+var kSvg = d3.select('#kaleidoscope')
+          .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .attr('id', 'kSvg')
+          .append('g')
+            .attr("transform", "translate(" + (width/2) + "," + (height/2) + ")");
+            /*
+          .append('g')
+            .attr('transform', 'scale(1,-1) translate(0,' + (-height) + ')');
+
+              /*
+          .append('g')
+            .attr("transform", "translate(" + (width/2) + "," + (height/2) + ")");
+
+
+
+
+          
+          .append('g')
+            .attr('id', 'kSeed')
+            .attr("transform", "translate(" + (width/2) + "," + (height/2) + ")");
+
+*/
 
 var arcObjRefl = {innerRadius: 0,
               outerRadius: 200,

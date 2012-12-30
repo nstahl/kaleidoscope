@@ -15,16 +15,16 @@ function dragmove(d) {
       //.attr("cy", d.y = Math.max(radius, Math.min(height - radius, d3.event.y)));
 }
 
-function addImage(parentTag, name, alpha) {
+function addImage(parentTag, name) {
 
     return parentTag.append('svg:image')
-      .attr('id', name)
+      .attr('id', 'theImage')
       .attr('x', 0)
       .attr('y', 0)
       .attr("class", "dot")
       .attr('width', width)
       .attr('height', height)
-      .attr('opacity', alpha)
+      .attr('opacity', .5)
       .attr('xlink:href', imgPath);
 
 }
@@ -37,33 +37,14 @@ function addPath(parentTag, name) {
           .attr('d', function(d) {return arc(d);});
 }
 
-function addPathWithOrigin(parentTag, name, origin) {
-
-  return parentTag.selectAll('path').data([arcObj])
-    .enter().append('path')
-          .attr('id', name)
-          .attr('class', 'geom')
-          .attr('transform', 'translate(' + origin.x + ',' + origin.y + ')')
-          .attr('d', function(d) {return arc(d);});
-}
-
-function addPathWithOriginScale(parentTag, name, origin, scaleFactor) {
-  var transformText = 'scale(' + scaleFactor.x + ',' + scaleFactor.y + ') ';
-  transformText += 'translate(' + origin.x + ',' + origin.y + ')';
-
-  return parentTag.selectAll('path').data([arcObj])
-    .enter().append('path')
-          .attr('id', name)
-          .attr('class', 'geom')
-          .attr('transform', transformText)
-          .attr('d', function(d) {return arc(d);});
-}
-
-function addClipPath(parentTag, name, origin, scaleFactor) {
+function addClipPath(parentTag, name) {
 
 var toReturn = parentTag.append('clipPath')
                       .attr('id', name);
-    addPathWithOriginScale(toReturn, name+'Path', origin, scaleFactor);                   
+
+
+    addPath(toReturn, '');                   
+
 }
 
 //exec
@@ -99,52 +80,37 @@ var svg = d3.select('#image')
             .attr('width', width)
             .attr('height', height);
 
-addImage(svg, 'imageMain', .5);
+addImage(svg, 'imageMain');
 //draw path for reference
 var tempGroup = svg.append('g')
     .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")");
 addPath(tempGroup, 'refPath');
 
+
 //add clipped image
-var clipImage = addImage(svg, 'clippedImage', 1);
-addClipPath(svg, 'myClipper', arcOrigin, {x:1, y:1});
+var clipImage = addImage(svg, 'clippedImage');
+//add clipping path
+tempGroup = svg.append('g')
+    .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")");
+addClipPath(tempGroup, 'myClipper');
+
 clipImage.attr('clip-path', 'url(#myClipper)');
 
-
-
 //MIRROR DIV//
-var svgMirror = d3.select('#mirrorsample')
+var groupMirror = d3.select('#mirrorsample')
           .append('svg')
             .attr('width', width)
-            .attr('height', height);
-            /*
+            .attr('height', height)
           .append('g')
-            .attr('transform', 'scale(1,-1) translate(0, ' + (-height) + ')');*/
+            .attr('transform', 'scale(1,-1) translate(0, ' + (-height) + ')');
 
 
-var mirrorImage = addImage(svgMirror, 'imageMirror', .5);
-mirrorImage.attr('transform', 'scale(1,-1) translate(0, ' + (-height) + ')');
+addImage(groupMirror, 'imageMirror');
+//draw clipping path for reference
+tempGroup = groupMirror.append('g')
+    .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")");
+addPath(tempGroup, 'refPathMirror');
 
-var mirrorOrigin = {x: arcOrigin.x, y: (arcOrigin.y-height)};
-
-var refPath = addPathWithOriginScale(svgMirror, 'refPathMirror', mirrorOrigin, {x:1, y:-1});
-
-var mirrorClipImage = addImage(svgMirror, 'imageMirror', 1);
-mirrorClipImage.attr('transform', 'scale(1,-1) translate(0, ' + (-height) + ')');
-
-var arcCentroidY = arcObj.outerRadius*Math.sin(pieAngle)/2;//arc.centroid(arcObj)[1];
-var diff = Math.abs((arcOrigin.y+arcCentroidY)-height/2);
-addClipPath(svgMirror, 'myMirrorClipper', {x:arcOrigin.x, y: arcOrigin.y+2*diff}, {x:1, y:1});
-mirrorClipImage.attr('clip-path', 'url(#myMirrorClipper)');
-
- //{x: arcOrigin.x, y: (arcOrigin.y-height)}, {x:1, y:-1});
-
-/*
-//add clipped image
-var arcCentroidY = arc.centroid(arcObj)[1];
-var clipImageMirror = addImage(groupMirror, 'clippedImageMirror', 1);
-addClipPath(groupMirror, 'myClipperMirror', arcOrigin);
-clipImageMirror.attr('clip-path', 'url(#myClipperMirror)');
 
 
 /*
