@@ -1,0 +1,48 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+      #myCanvas {
+        border: 1px solid #9C9898;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="myCanvas" width="300" height="300"></canvas>
+    <script>
+      var canvas = document.getElementById('myCanvas');
+      var context = canvas.getContext('2d');
+      var x = canvas.width / 2;
+      var y = canvas.height / 2;
+      var radius = 75;
+      var startAngle = 0;
+      var endAngle = Math.PI/4;
+      var counterClockwise = false;
+
+
+      //draw arc
+      context.beginPath();
+      context.moveTo(x,y);
+      context.arc(x,y, radius, startAngle, endAngle);
+      context.closePath();
+      //styling
+      context.lineWidth = 2;
+      context.strokeStyle = 'black';
+      context.stroke();
+
+      var imageObj = new Image();
+
+      imageObj.onload = function() {
+        imageObj.width
+        context.drawImage(imageObj, 10, 10, 100, 100);
+      };
+      imageObj.src = 'data/2621.JPG';
+    
+
+    </script>
+  </body>
+</html>

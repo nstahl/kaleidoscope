@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+
+<head>
+<title>Main</title>
+<link href="css/mystyle.css" rel="stylesheet">
+<script type="text/javascript" src="js/d3.v3.js"></script>
+</head>
+<body>
+
+
+<div id="hello2">
+	<svg width="240px" height="240px" viewBox="0 0 240 240">
+<defs>
+<clipPath id="curveClip">
+    <path id="curve1"
+        d="M5 55 C 25 5, 45 -25, 75 55, 85 85, 20 105, 40 55 Z"
+        style="stroke: black; fill: none;"/>
+</clipPath>
+
+
+<g id="shapes">
+<rect x="0" y="50" width="90" height="60" style="fill: #999;"/>
+<circle cx="25" cy="25" r="25" style="fill: #666;"/>
+<polygon points="30 0 80 0 80 100" style="fill: #ccc;"/>
+</g>
+</defs>
+
+<!-- draw with curved clip-path -->
+<use xlink:href="#shapes" style="clip-path: url(#curveClip);" />
+
+<g transform="translate(100,0)">
+    <use xlink:href="#shapes"/>
+    <use xlink:href="#curve1"/>   <!-- show clip path -->
+</g>
+
+</svg>
+</div>
+
+
+<div id="hello">
+<svg width="240px" height="240px" viewBox="0 0 240 240">
+	<!-- center of rotation -->
+<circle cx="50" cy="50" r="3" style="fill: black;"/>
+
+<!-- non-rotated arrow -->
+<g id="arrow" style="stroke: black;">
+    <line x1="60" y1="50" x2="90" y2="50"/>
+    <polygon points="90 50, 85 45, 85 55"/>
+</g>
+
+<!-- rotated around center point -->
+<use xlink:href="#arrow" transform="rotate(60, 50, 50)"/>
+<use xlink:href="#arrow" transform="rotate(-90, 50, 50)"/>
+<use xlink:href="#arrow" transform="rotate(-150, 50 50)"/>
+</svg>
+</div>
+<div id="usetest">
+<svg width="240px" height="240px" viewBox="0 0 240 240">
+<title>Grouped Drawing</title>
+<desc>Stick-figure drawings of a house and people</desc>
+
+<defs>
+<g id="house" style="stroke: black;">
+    <desc>House with door</desc>
+    <rect x="0" y="41" width="60" height="60"/>
+    <polyline points="0 41, 30 0, 60 41"/>
+    <polyline points="30 101, 30 71, 44 71, 44 101"/>
+</g>
+
+<g id="man" style="fill: none; stroke: black;">
+    <desc>Male human</desc> 
+    <circle cx="10" cy="10" r="10"/>
+    <line x1="10" y1="20" x2="10" y2="44"/>
+    <polyline points="1 58, 10 44, 19 58"/>
+    <polyline points="1 24, 10 30, 19 24"/>
+</g>
+
+<g id="woman" style="fill: none; stroke: black;">
+    <desc>Female human</desc>
+    <circle cx="10" cy="10" r="10"/>
+    <polyline points="10 20, 10 34, 0 44, 20 44, 10 34"/>
+    <line x1="4" y1="58" x2="8" y2="44"/>
+    <line x1="12" y1="44" x2="16" y2="58"/>
+    <polyline points="1 24, 10 30, 19 24" />
+</g>
+
+<g id="couple">
+    <desc>Male and female human</desc>
+    <use xlink:href="#man" x="0" y="0"/>
+    <use xlink:href="#woman" x="25" y="0"/>
+</g>
+</defs>
+
+<!-- make use of the defined groups -->
+<use xlink:href="#house" x="0" y="0" style="fill: #cfc;"/>
+<use xlink:href="#couple" x="70" y="40"/>
+
+<use xlink:href="#house" x="120" y="0" style="fill: #99f;"/>
+<use xlink:href="#couple" x="190" y="40"/>
+
+<use xlink:href="#woman" x="0" y="145"/>
+<use xlink:href="#man" x="25" y="145"/>
+<use xlink:href="#house" x="65" y="105" style="fill: #c00;"/>
+</svg>
+
+</div>

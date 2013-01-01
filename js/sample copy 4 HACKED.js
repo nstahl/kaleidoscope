@@ -47,11 +47,11 @@ function addPathWithOrigin(parentTag, name, origin) {
           .attr('d', function(d) {return arc(d);});
 }
 
-function addPathWithOriginScale(parentTag, name, origin, scaleFactor, dataObj) {
+function addPathWithOriginScale(parentTag, name, origin, scaleFactor) {
   var transformText = 'scale(' + scaleFactor.x + ',' + scaleFactor.y + ') ';
   transformText += 'translate(' + origin.x + ',' + origin.y + ')';
 
-  return parentTag.selectAll('path').data([dataObj])
+  return parentTag.selectAll('path').data([arcObj])
     .enter().append('path')
           .attr('id', name)
           .attr('class', 'geom')
@@ -59,23 +59,11 @@ function addPathWithOriginScale(parentTag, name, origin, scaleFactor, dataObj) {
           .attr('d', function(d) {return arc(d);});
 }
 
-function addClipPath(parentTag, name, origin, scaleFactor, dataObj) {
+function addClipPath(parentTag, name, origin, scaleFactor) {
 
 var toReturn = parentTag.append('clipPath')
                       .attr('id', name);
-    addPathWithOriginScale(toReturn, name+'Path', origin, scaleFactor, dataObj);                   
-}
-
-function addUse(parentTag, name, origin, scaleFactor, reference) {
-//add clipped image
-  var transformText = 'scale(' + scaleFactor.x + ',' + scaleFactor.y + ') ';
-  transformText += 'translate(' + origin.x + ',' + origin.y + ')';
-
-return parentTag.append('svg:use')
-    .attr('id', name)
-    .attr('transform', transformText)
-    .attr('xlink:href', '#' + reference);
-
+    addPathWithOriginScale(toReturn, name+'Path', origin, scaleFactor);                   
 }
 
 //exec
@@ -96,17 +84,12 @@ var imgPath = "data/2621.JPG";
 //define what path for clipping
 var pieAngle = Math.PI/4;
 var pieStartAngle = Math.PI/2;
-var arcOrigin = {x: 0, y:width/2.0};
+var arcOrigin = {x: width/5, y:height/4};
 var arc = d3.svg.arc();
 var arcObj = {innerRadius: 0,
               outerRadius: 200,
               startAngle: pieStartAngle,
               endAngle: pieStartAngle+pieAngle};
-
-var arcObjRefl = {innerRadius: 0,
-              outerRadius: 200,
-              startAngle: (pieStartAngle-pieAngle),
-              endAngle: pieStartAngle};
 
 
 //ACTUAL DIV//
@@ -124,7 +107,7 @@ addPath(tempGroup, 'refPath');
 
 //add clipped image
 var clipImage = addImage(svg, 'clippedImage', 1);
-addClipPath(svg, 'myClipper', arcOrigin, {x:1, y:1}, arcObj);
+addClipPath(svg, 'myClipper', arcOrigin, {x:1, y:1});
 clipImage.attr('clip-path', 'url(#myClipper)');
 
 
@@ -144,50 +127,15 @@ mirrorImage.attr('transform', 'scale(1,-1) translate(0, ' + (-height) + ')');
 
 var mirrorOrigin = {x: arcOrigin.x, y: (arcOrigin.y-height)};
 
-var refPath = addPathWithOriginScale(svgMirror, 'refPathMirror', mirrorOrigin, {x:1, y:-1}, arcObj);
+var refPath = addPathWithOriginScale(svgMirror, 'refPathMirror', mirrorOrigin, {x:1, y:-1});
 
-var mirrorClipImage = addImage(svgMirror, 'imageMirrorClip', 1);
+var mirrorClipImage = addImage(svgMirror, 'imageMirror', 1);
 mirrorClipImage.attr('transform', 'scale(1,-1) translate(0, ' + (-height) + ')');
 
 var arcCentroidY = arcObj.outerRadius*Math.sin(pieAngle)/2;//arc.centroid(arcObj)[1];
 var diff = Math.abs((arcOrigin.y+arcCentroidY)-height/2);
-
-addClipPath(svgMirror, 'myMirrorClipper', {x:arcOrigin.x, y: arcOrigin.y}, {x:1, y:1}, arcObj);
+addClipPath(svgMirror, 'myMirrorClipper', {x:arcOrigin.x, y: arcOrigin.y+2*diff}, {x:1, y:1});
 mirrorClipImage.attr('clip-path', 'url(#myMirrorClipper)');
-
-
-var kGroup = d3.select('#kaleidoscope')
-              .append('svg')
-              .attr('width', width)
-              .attr('height', height)
-            .append('g')
-              .attr('transform', 'translate(' + (width/2) + ',' + (height/2) + ')');
-
-kGroup.append('circle')
-        .attr('cx', 0)
-        .attr('cy', 0)
-        .attr('r', 10);
-
-  addUse(kGroup, 'oAtom', {x:-arcOrigin.x, y:-arcOrigin.y}, {x:1, y:1}, 'clippedImage');
-  var useTag = addUse(kGroup, 'rAtom', {x:-arcOrigin.x, y:-(arcOrigin.y)}, {x:1, y:1}, 'clippedImage');
-  useTag.attr('class' ,'mirrorClass');
-
-//should have worked like this
-//addClipPath(svgMirror, 'myMirrorClipper', {x:arcOrigin.x, y: arcOrigin.y}, {x:1, y:1}, arcObj);
-//mirrorClipImage.attr('clip-path', 'url(#myMirrorClipper)');
-
-
-/*
-addClipPath(svgMirror, 'myMirrorClipper', {x:arcOrigin.x, y: arcOrigin.y}, {x:1, y:1}, arcObj);
-mirrorClipImage.attr('clip-path', 'url(#myMirrorClipper)');
-
-/*
-//start
-//this works!
-addClipPath(svgMirror, 'myMirrorClipper', {x:arcOrigin.x, y: arcOrigin.y+2*diff}, {x:1, y:1}, arcObj);
-mirrorClipImage.attr('clip-path', 'url(#myMirrorClipper)');
-//end
-
 
  //{x: arcOrigin.x, y: (arcOrigin.y-height)}, {x:1, y:-1});
 

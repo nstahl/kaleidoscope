@@ -1,0 +1,20 @@
+<div id="mirrorsample" class="divClass">
+	<svg width="500" height="500">
+
+	<!--add full image for reference-->
+	<image id="refImageMirror" x="0" y="0" class="dot" width="500" height="500" opacity="1" xlink:href="http://www.nyweamet.org/wp-content/uploads/2011/09/0942a__grandCentralStationExterior.jpg" transform="scale(1,-1) translate(0, -500)"></image>
+
+	<!--add full path for reference-->
+	<path id="refPathMirror" class="geom" transform="scale(1,-1) translate(0,-210)" d="M200,0A200,200 0 0,1 141.4213562373095,141.42135623730948L0,0Z" style="fill: none; stroke: black"></path>
+
+	<use id="clippedImage" xlink:href="#refImageMirror" clip-path="url(#myMirrorClipper)"></use>
+
+	<clipPath id="myMirrorClipper">
+			<use xlink:href="#refPathMirror"></use>
+	</clipPath>
+
+	</svg>
+
+</div>
+<!--
+	<image id="imageMirrorClip" x="0" y="0" class="dot" width="500" height="500" opacity="1" xlink:href="data/2621.JPG" transform="scale(1,-1) translate(0, -500)" clip-path="url(#myMirrorClipper)"></image>

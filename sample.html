@@ -13,11 +13,21 @@
     .over td { background-color: #F3EDA9; }
     td.fill { background-color: #000 !important; }	
     .dot {stroke: none; }
+
+.mirrorClass {
+    float: left;
+  -webkit-transform: matrix(1,0,0,-1,0,0);
+  -moz-transform: matrix(1,0,0,-1,0,0);
+  -o-transform: matrix(1,0,0,-1,0,0);
+  transform: matrix(1,0,0,-1,0,0);
+}
+
 	</style>
 </head>
 <body>
     <button type="button" class="divClass" onClick="update();">Upload</button>
     <div id="image" class="divClass"></div>
+    <div id="mirrorsample" class="divClass"></div>
     <div id="kaleidoscope" class="divClass"></div>
     
 
