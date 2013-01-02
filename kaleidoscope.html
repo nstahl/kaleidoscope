@@ -1,0 +1,86 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+  <script type="text/javascript" src="js/d3.min.js"></script>
+  
+  <style type="text/css">
+    body { font-family: sans-serif; font-size: 14px; }
+    table { font-size: 11px; }
+    td { border: 1px solid #ddd; width: 10px; height 10px; }
+    .divClass {float: left;}
+    .geom {stroke: black; fill: none;}
+    .under td { background-color: #F3A9A9; }
+    .over td { background-color: #F3EDA9; }
+    td.fill { background-color: #000 !important; }  
+    .dot {stroke: none; }
+  </style>
+  </head>
+  <body>
+    <div id="image" class="divClass"></div>
+    <canvas id="kaleidoCanvas" width="700" height="700"></canvas>
+
+    <script src="js/svg_interactive.js"></script>
+    <script>
+
+    function updateCanvas() {
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    draw(imageObj);
+    }
+
+    function drawClipping(image) {
+
+       //draw arc
+      context.beginPath();
+      context.moveTo(0,0);
+      context.arc(0,0, radius, startAngle, endAngle);
+      context.closePath();
+
+      context.clip();
+      context.drawImage(image, imageOrigin.x, imageOrigin.y, image.width/4, image.height/4);
+      
+
+    }
+    function draw(image) {
+
+      var wedgeAngle = Math.abs(endAngle-startAngle);
+      var rotations = Math.PI/wedgeAngle;
+      context.save();
+      for(var j=0; j<rotations; j++) {
+        context.save();
+        context.rotate(2*wedgeAngle)
+        for(var i=0; i<2;i++) {
+          context.save();
+          context.scale(1,Math.pow(-1, i));
+          drawClipping(image);
+          context.restore();
+        }
+      }
+    context.restore();
+    }
+      //setup
+      var canvas = document.getElementById('kaleidoCanvas');
+      var context = canvas.getContext('2d');
+      var x = canvas.width / 2;
+      var y = canvas.height / 2;
+      var radius = x;
+      var startAngle = 0;
+      var endAngle = Math.PI/4;
+      var counterClockwise = false;
+      var imageOrigin = {x: -20, y:-20};
+
+      //center kaleidoscope
+      context.save();
+      context.translate(x,y);
+
+      var imageObj = new Image();
+
+      imageObj.onload = function() {
+        draw(imageObj);
+      };
+      imageObj.src = 'data/2621.JPG';
+    
+
+    </script>
+  </body>
+</html>
