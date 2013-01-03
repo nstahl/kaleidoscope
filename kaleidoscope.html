@@ -2,7 +2,10 @@
 <html>
   <head>
   <script type="text/javascript" src="js/d3.min.js"></script>
-  
+  <link href="css/bootstrap.css" rel="stylesheet" media="screen">
+  <script src="http://code.jquery.com/jquery-latest.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+
   <style type="text/css">
     body { font-family: sans-serif; font-size: 14px; }
     table { font-size: 11px; }
@@ -14,13 +17,53 @@
     td.fill { background-color: #000 !important; }  
     .dot {stroke: none; }
   </style>
+  <title>Kaleidoscope</title>
   </head>
   <body>
-    <div id="image" class="divClass"></div>
-    <canvas id="kaleidoCanvas" width="700" height="700"></canvas>
-
-    <script src="js/svg_interactive.js"></script>
+    <h1>Kaleidoscope</h1>
+    <div class="container">
+    <div class="row">
+      <div class="span4">
+      <div id="image" class="divClass"></div>
+      </div>
+      <div class="span8">
+      <canvas id="kaleidoCanvas" width="500" height="500"></canvas>
+      </div>
+    </div>
+  </div>
     <script>
+
+    function setSvgToImageScaleFactor() {
+      whiteSpace = {};
+      if( imageObj.width === Math.max(imageObj.width, imageObj.height)) {
+        scaleFactor = imageObj.width/width;
+        whiteSpace.x = 0;
+        whiteSpace.y = (height-(imageObj.height/scaleFactor))/2;
+      }
+      else {
+        scaleFactor = imageObj.height/height;
+        whiteSpace.x = (width-(imageObj.width/scaleFactor))/2;
+        whiteSpace.y = 0;
+      }
+
+    }
+
+    function dragmove(d) {
+    arcOrigin.x += d3.event.dx;
+    arcOrigin.y += d3.event.dy;
+
+    imageOrigin.x = -(arcOrigin.x-whiteSpace.x);
+    imageOrigin.y = -(arcOrigin.y-whiteSpace.y);
+
+
+    d3.select('#theClipPath')
+        .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")");
+    d3.select('#refGroup')
+      .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")");
+
+    updateCanvas();
+
+    }
 
     function updateCanvas() {
 
@@ -37,10 +80,9 @@
       context.closePath();
 
       context.clip();
-      context.drawImage(image, imageOrigin.x, imageOrigin.y, image.width/4, image.height/4);
-      
-
+      context.drawImage(image, imageOrigin.x, imageOrigin.y, image.width/scaleFactor, image.height/scaleFactor);
     }
+
     function draw(image) {
 
       var wedgeAngle = Math.abs(endAngle-startAngle);
@@ -58,27 +100,118 @@
       }
     context.restore();
     }
+
+
+//interaction
+    var width = 300,
+        height = 300,
+        padding = 0;
+    var scaleFactor, whiteSpace;
+
+    var drag = d3.behavior.drag()
+        .origin(arcOrigin)
+        .on("drag", dragmove);
+    
+    var imgPath = "data/2621.JPG";
+
+    //sampler setup//
+    var svg = d3.select('#image')
+              .append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .attr('id', 'imageSVG');
+
+    //add def tag
+    var defsTag = svg.append('defs');
+
+
+    var srcImage = svg.append('g')
+          .attr('id', 'imageGroup')
+          .attr('opacity', .5)
+          .attr("transform", "translate(" + (padding/2) + "," + (padding/2) + ")")
+        .append('svg:image')
+          .attr('id', 'theImage')
+          .attr('x', 0)
+          .attr('y', 0)
+          .attr("class", "dot")
+          .attr('width', width)
+          .attr('height', height)
+          
+          .attr('xlink:href', imgPath);
+
+    //define path for clipping
+    var pieAngle = Math.PI/8;
+    var pieStartAngle = Math.PI/2;
+    var arcOrigin = {x: width/3, y:height/3};
+    var arc = d3.svg.arc();
+    var arcObj = {innerRadius: 0,
+                  outerRadius: width/3,
+                  startAngle: pieStartAngle,
+                  endAngle: pieStartAngle+pieAngle};
+
+
+    var pathTag = defsTag.selectAll('path').data([arcObj])
+      .enter().append('path')
+            .attr('id', 'arcPath')
+            .attr('class', 'geom')
+            .attr('d', function(d) {return arc(d);});
+
+    var clipTag = defsTag.append('clipPath')
+                          .attr('id', 'theClipPath')
+                          .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")");
+
+    clipTag.selectAll('path').data([arcObj])
+      .enter().append('path')
+            .attr('class', 'geom')
+            .attr('d', function(d) {return arc(d);});
+
+    //draw clipping path for reference
+    svg.append('g')
+        .attr('id', 'refGroup')
+        .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")")
+      .append('svg:use')
+        .attr('xlink:href', '#arcPath')
+        .attr('class', 'geom');
+
+
+    //add clipped image
+    svg.append('svg:use')
+        .attr('id', 'wedge')
+        .attr('xlink:href', '#theImage')
+        .attr('opacity', 1)
+        .attr('clip-path', 'url(#theClipPath)')
+        .call(drag);
+
+
+    //canvas drawing//
       //setup
       var canvas = document.getElementById('kaleidoCanvas');
       var context = canvas.getContext('2d');
       var x = canvas.width / 2;
       var y = canvas.height / 2;
-      var radius = x;
+      var radius = arcObj.outerRadius;
       var startAngle = 0;
-      var endAngle = Math.PI/4;
+      var endAngle = startAngle+pieAngle;
       var counterClockwise = false;
-      var imageOrigin = {x: -20, y:-20};
+      var imageOrigin;
 
       //center kaleidoscope
       context.save();
       context.translate(x,y);
+      context.scale((canvas.width/2)/radius, (canvas.width/2)/radius);
 
       var imageObj = new Image();
 
       imageObj.onload = function() {
+        setSvgToImageScaleFactor();
+        imageOrigin = {x: -(arcOrigin.x-whiteSpace.x), y: -(arcOrigin.y-whiteSpace.y)};
         draw(imageObj);
       };
       imageObj.src = 'data/2621.JPG';
+
+
+      //interaction//
+
     
 
     </script>
