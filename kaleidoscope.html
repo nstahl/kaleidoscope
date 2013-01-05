@@ -3,7 +3,8 @@
   <head>
   <script type="text/javascript" src="js/d3.min.js"></script>
   <link href="css/bootstrap.css" rel="stylesheet" media="screen">
-  <script src="http://code.jquery.com/jquery-latest.js"></script>
+  <!--<script src="http://code.jquery.com/jquery-latest.js"></script>-->
+  <script src="js/jquery.js"></script>
   <script src="js/bootstrap.min.js"></script>
 
   <style type="text/css">
@@ -16,6 +17,26 @@
     .over td { background-color: #F3EDA9; }
     td.fill { background-color: #000 !important; }  
     .dot {stroke: none; }
+    div.fileinputs {
+    position: relative;
+    }
+
+div.fakefile {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: 1;
+}
+
+input.file {
+  position: relative;
+  text-align: right;
+  -moz-opacity:0 ;
+  filter:alpha(opacity: 0);
+  opacity: 0;
+  z-index: 2;
+}
+
   </style>
   <title>Kaleidoscope</title>
   </head>
@@ -24,14 +45,32 @@
     <div class="container">
     <div class="row">
       <div class="span4">
+ 
+
+      <div class="fileinputs">
+        <input id="fselect" name="fileselect" type="file" class="file"/>
+        <div class="fakefile">
+          <h7>Choose Image</h7>
+        </div>
+      </div>
+
+
       <div id="image" class="divClass"></div>
       </div>
       <div class="span8">
-      <canvas id="kaleidoCanvas" width="500" height="500"></canvas>
+      <a id='downloadLink' href="http://www.w3schools.com/">
+      <canvas id="kaleidoCanvas" width="500" height="500" style=""></canvas>
+      </a>
+   
       </div>
     </div>
   </div>
     <script>
+
+
+    function fileSelected(){
+      console.log(event.target.files.name);
+    }
 
     function setSvgToImageScaleFactor() {
       whiteSpace = {};
@@ -99,9 +138,19 @@
         }
       }
     context.restore();
+        dataURL = canvas.toDataURL();
+       document.getElementById('downloadLink').href = dataURL;
     }
 
 
+
+//////////////////////execute//////////////////////
+
+
+//jquery
+$(document).ready(function(){
+    $('#fselect').change(fileSelected);
+    });
 //interaction
     var width = 300,
         height = 300,
@@ -201,16 +250,21 @@
       context.scale((canvas.width/2)/radius, (canvas.width/2)/radius);
 
       var imageObj = new Image();
-
+      var dataURL;
       imageObj.onload = function() {
         setSvgToImageScaleFactor();
         imageOrigin = {x: -(arcOrigin.x-whiteSpace.x), y: -(arcOrigin.y-whiteSpace.y)};
         draw(imageObj);
+
       };
       imageObj.src = 'data/2621.JPG';
 
 
-      //interaction//
+      
+
+      // set canvasImg image src to dataURL
+      // so it can be saved as an image
+     
 
     
 
