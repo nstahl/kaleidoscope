@@ -50,7 +50,7 @@ input.file {
       <div class="fileinputs">
         <input id="fselect" name="fileselect" type="file" class="file"/>
         <div class="fakefile">
-          <h7>Choose Image</h7>
+          <h5>Choose Image</h5>
         </div>
       </div>
 
@@ -58,7 +58,7 @@ input.file {
       <div id="image" class="divClass"></div>
       </div>
       <div class="span8">
-      <a id='downloadLink' href="http://www.w3schools.com/">
+      <a id='downloadLink' href="http://www.w3schools.com/" target="_blank">
       <canvas id="kaleidoCanvas" width="500" height="500" style=""></canvas>
       </a>
    
@@ -67,9 +67,66 @@ input.file {
   </div>
     <script>
 
-
+    //function to handle file selection and loading
     function fileSelected(){
-      console.log(event.target.files.name);
+     var f = event.target.files[0];
+
+     if (f.type.match('image.*')) {
+
+
+        var reader = new FileReader();
+
+        // Closure to capture the file information.
+        reader.onload = function(theFile) {
+          console.log('Loaded the file');
+          imgPath = event.target.result;
+          d3.select('#theImage').attr('xlink:href', imgPath);
+          //update canvas image
+          loadCanvasImage();
+          };
+        // Read in the image file as a data URL.
+        reader.readAsDataURL(f);
+      }
+      else {
+        console.log('Not an image file!');
+      }
+
+
+    }
+
+    function loadCanvasImage() {
+
+      imageObj.onload = function() {
+        setSvgToImageScaleFactor();
+        setArcOriginLimits();
+        imageOrigin = {x: -(arcOrigin.x-whiteSpace.x), y: -(arcOrigin.y-whiteSpace.y)};
+        draw(imageObj);
+
+      };
+      imageObj.src = imgPath;
+
+    }
+
+    function setArcOriginLimits() {
+      arcOriginLimits = {};
+      arcOriginLimits['xmin'] = whiteSpace.x;
+      arcOriginLimits['xmax'] = width-whiteSpace.x-arcObj.outerRadius;
+      arcOriginLimits['ymin'] = whiteSpace.y;
+      arcOriginLimits['ymax'] = height-whiteSpace.y-(arcObj.outerRadius*Math.sin(Math.abs(arcObj.endAngle-arcObj.startAngle)));
+
+      //constrain sampler
+      constrainSampler();
+
+    }
+
+    function constrainSampler() {
+
+      arcOrigin.x = Math.min(arcOrigin.x, arcOriginLimits.xmax);
+      arcOrigin.x = Math.max(arcOrigin.x, arcOriginLimits.xmin);
+      arcOrigin.y = Math.min(arcOrigin.y, arcOriginLimits.ymax);
+      arcOrigin.y = Math.max(arcOrigin.y, arcOriginLimits.ymin);
+
+
     }
 
     function setSvgToImageScaleFactor() {
@@ -91,6 +148,8 @@ input.file {
     arcOrigin.x += d3.event.dx;
     arcOrigin.y += d3.event.dy;
 
+    constrainSampler();
+
     imageOrigin.x = -(arcOrigin.x-whiteSpace.x);
     imageOrigin.y = -(arcOrigin.y-whiteSpace.y);
 
@@ -108,6 +167,7 @@ input.file {
 
     context.clearRect(0, 0, canvas.width, canvas.height);
     draw(imageObj);
+
     }
 
     function drawClipping(image) {
@@ -151,17 +211,17 @@ input.file {
 $(document).ready(function(){
     $('#fselect').change(fileSelected);
     });
-//interaction
+    //interaction
     var width = 300,
         height = 300,
         padding = 0;
-    var scaleFactor, whiteSpace;
+    var scaleFactor, whiteSpace, arcOriginLimits;
 
     var drag = d3.behavior.drag()
         .origin(arcOrigin)
         .on("drag", dragmove);
     
-    var imgPath = "data/2621.JPG";
+    var imgPath = "data/chrysler.JPG";
 
     //sampler setup//
     var svg = d3.select('#image')
@@ -185,7 +245,6 @@ $(document).ready(function(){
           .attr("class", "dot")
           .attr('width', width)
           .attr('height', height)
-          
           .attr('xlink:href', imgPath);
 
     //define path for clipping
@@ -251,22 +310,9 @@ $(document).ready(function(){
 
       var imageObj = new Image();
       var dataURL;
-      imageObj.onload = function() {
-        setSvgToImageScaleFactor();
-        imageOrigin = {x: -(arcOrigin.x-whiteSpace.x), y: -(arcOrigin.y-whiteSpace.y)};
-        draw(imageObj);
 
-      };
-      imageObj.src = 'data/2621.JPG';
+      loadCanvasImage();
 
-
-      
-
-      // set canvasImg image src to dataURL
-      // so it can be saved as an image
-     
-
-    
 
     </script>
   </body>
