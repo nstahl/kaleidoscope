@@ -60,7 +60,7 @@
 
   <div class="container header">
   <h1>Kaleidoscope</h1>
-  <p>My sister, Frederica, and I are experimenting with the use of svg and canvas elements.</p>
+  <p>My sister, Frederica, and I are experimenting with image tansformations.</p>
   </div>
     
   <div class="container">
@@ -106,7 +106,6 @@
 <script>
     
     function thumbnailClick(tag) {
-      console.log('Thumb nail was clicked');
       imgPath = tag.id;
       d3.select('#theImage').attr('xlink:href', imgPath);
       loadCanvasImage();
@@ -202,9 +201,6 @@
     imageOrigin.x = -(arcOrigin.x-whiteSpace.x);
     imageOrigin.y = -(arcOrigin.y-whiteSpace.y);
 
-
-
-
     updateCanvas();
 
     }
@@ -234,7 +230,7 @@
       var rotations = Math.PI/wedgeAngle;
       context.save();
       for(var j=0; j<rotations; j++) {
-        context.save();
+        //context.save();
         context.rotate(2*wedgeAngle)
         for(var i=0; i<2;i++) {
           context.save();
