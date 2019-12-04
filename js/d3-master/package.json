@@ -32,7 +32,7 @@
     "sizzle": "1.1.x"
   },
   "devDependencies": {
-    "uglify-js": "2.2.2",
+    "uglify-js": "3.7.1",
     "vows": "0.6.x"
   },
   "scripts": {
