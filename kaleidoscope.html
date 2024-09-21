@@ -1,6 +1,7 @@
 <!DOCTYPE HTML>
 <html>
-  <head>
+
+<head>
   <script type="text/javascript" src="js/d3.min.js"></script>
   <link href="css/bootstrap.css" rel="stylesheet" media="screen">
   <!--<script src="http://code.jquery.com/jquery-latest.js"></script>-->
@@ -8,20 +9,56 @@
   <script src="js/bootstrap.min.js"></script>
 
   <style type="text/css">
-    body { padding-top: 10px;}
-    table { font-size: 11px; }
-    td { border: 1px solid #ddd; width: 10px; height 10px; }
-    .centerBlock {margin-left:auto; margin-right:auto;}
-    .center {text-align: center;}
-    .header {padding-bottom: 25px;}
-    .geom {stroke: black; fill: none;}
-    .under td { background-color: #F3A9A9; }
-    .over td { background-color: #F3EDA9; }
-    td.fill { background-color: #000 !important; }  
-    .dot {stroke: none; }
+    body {
+      padding-top: 10px;
+    }
+
+    table {
+      font-size: 11px;
+    }
+
+    td {
+      border: 1px solid #ddd;
+      width: 10px;
+      height 10px;
+    }
+
+    .centerBlock {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .header {
+      padding-bottom: 25px;
+    }
+
+    .geom {
+      stroke: black;
+      fill: none;
+    }
+
+    .under td {
+      background-color: #F3A9A9;
+    }
+
+    .over td {
+      background-color: #F3EDA9;
+    }
+
+    td.fill {
+      background-color: #000 !important;
+    }
+
+    .dot {
+      stroke: none;
+    }
 
     div.fileinputs {
-    position: relative;
+      position: relative;
     }
 
     div.fakefile {
@@ -30,104 +67,109 @@
       left: 0px;
       z-index: 1;
     }
-      /*see-thru*/
+
+    /*see-thru*/
     input.file {
       position: relative;
       text-align: right;
-      -moz-opacity:0 ;
-      filter:alpha(opacity: 0);
+      -moz-opacity: 0;
+      filter: alpha(opacity: 0);
       opacity: 0;
       z-index: 2;
     }
 
     .thumbnails {
-    text-align:center;
+      text-align: center;
     }
 
-    .thumbnails > li {
-        display: inline-block;
-        *display:inline; /* ie7 fix */
-        float: none; /* this is the part that makes it work */
+    .thumbnails>li {
+      display: inline-block;
+      *display: inline;
+      /* ie7 fix */
+      float: none;
+      /* this is the part that makes it work */
     }
-
-    </style>
+  </style>
 
 
   <title>Kaleidoscope</title>
-  </head>
+</head>
 
-  <body>
+<body>
 
   <div class="container header">
-  <h1>Kaleidoscope</h1>
-  <p>My sister, Frederica, and I are experimenting with image tansformations.</p>
+    <h1>Kaleidoscope</h1>
+    <p>My sister, Frederica, and I are experimenting with image tansformations.</p>
   </div>
-    
+
   <div class="container">
 
-      <div class="row">
+    <div class="row">
 
-        <div class="span4">
-          <div id="image"></div>
-<!-- provided_ice.JPG provided_midtown.jpg provided_sky.JPG -->
+      <div class="span4">
+        <div id="image"></div>
+        <!-- provided_ice.JPG provided_midtown.jpg provided_sky.JPG -->
         <!--thumbnails-->
         <div class="row">
           <div class="span1">
-          <img id="data/provided_sky.jpg" src="data/thumb_sky.png" height="100" width="100" onclick="thumbnailClick(this)">
+            <img id="data/provided_sky.jpg" src="data/thumb_sky.png" height="100" width="100"
+              onclick="thumbnailClick(this)">
           </div>
           <div class="span1">
-          <img id="data/provided_midtown.jpg" src="data/thumb_midtown.png" height="100" width="100" onclick="thumbnailClick(this)">
+            <img id="data/provided_midtown.jpg" src="data/thumb_midtown.png" height="100" width="100"
+              onclick="thumbnailClick(this)">
           </div>
           <div class="span1">
-          <img id="data/provided_ice.jpg" src="data/thumb_ice.png" height="100" width="100" onclick="thumbnailClick(this)">
+            <img id="data/provided_ice.jpg" src="data/thumb_ice.png" height="100" width="100"
+              onclick="thumbnailClick(this)">
           </div>
         </div>
 
         <div class="fileinputs">
-            <input id="fselect" name="fileselect" type="file" class="file"/>
-            <div class="fakefile">
-              <h5>Upload Your Image</h5>
-            </div>
-          </div><!--/fileinputs-->
+          <input id="fselect" name="fileselect" type="file" class="file" />
+          <div class="fakefile">
+            <h5>Upload Your Image</h5>
+          </div>
+        </div><!--/fileinputs-->
 
 
-        </div><!--/span4-->
+      </div><!--/span4-->
 
-        <div class="span7 offset1">
-          <a id='downloadLink' href="http://www.w3schools.com/" target="_blank">
+      <div class="span7 offset1">
+        <a id='downloadLink' href="http://www.w3schools.com/" target="_blank">
           <canvas id="kaleidoCanvas" width="500" height="500" style=""></canvas>
-          </a>
-        </div><!--/span8-->
+        </a>
+      </div><!--/span8-->
     </div><!--/row-->
   </div><!--/container-->
 
 
 
-<script>
-    
+  <script>
+
     function thumbnailClick(tag) {
       imgPath = tag.id;
       d3.select('#theImage').attr('xlink:href', imgPath);
       loadCanvasImage();
     }
-    
-    //function to handle file selection and loading
-    function fileSelected(){
-     var f = event.target.files[0];
 
-     if (f.type.match('image.*')) {
+    //function to handle file selection and loading
+    function fileSelected() {
+      var f = event.target.files[0];
+
+      if (f.type.match('image.*')) {
 
 
         var reader = new FileReader();
 
         // Closure to capture the file information.
-        reader.onload = function(theFile) {
+        reader.onload = function (theFile) {
           console.log('Loaded the file');
           imgPath = event.target.result;
           d3.select('#theImage').attr('xlink:href', imgPath);
           //update canvas image
           loadCanvasImage();
-          };
+        };
         // Read in the image file as a data URL.
         reader.readAsDataURL(f);
       }
@@ -140,10 +182,10 @@
 
     function loadCanvasImage() {
 
-      imageObj.onload = function() {
+      imageObj.onload = function () {
         setSvgToImageScaleFactor();
         setArcOriginLimits();
-        imageOrigin = {x: -(arcOrigin.x-whiteSpace.x), y: -(arcOrigin.y-whiteSpace.y)};
+        imageOrigin = { x: -(arcOrigin.x - whiteSpace.x), y: -(arcOrigin.y - whiteSpace.y) };
         draw(imageObj);
 
       };
@@ -154,9 +196,9 @@
     function setArcOriginLimits() {
       arcOriginLimits = {};
       arcOriginLimits['xmin'] = whiteSpace.x;
-      arcOriginLimits['xmax'] = width-whiteSpace.x-arcObj.outerRadius;
+      arcOriginLimits['xmax'] = width - whiteSpace.x - arcObj.outerRadius;
       arcOriginLimits['ymin'] = whiteSpace.y;
-      arcOriginLimits['ymax'] = height-whiteSpace.y-(arcObj.outerRadius*Math.sin(Math.abs(arcObj.endAngle-arcObj.startAngle)));
+      arcOriginLimits['ymax'] = height - whiteSpace.y - (arcObj.outerRadius * Math.sin(Math.abs(arcObj.endAngle - arcObj.startAngle)));
 
       //constrain sampler
       constrainSampler();
@@ -170,191 +212,194 @@
       arcOrigin.y = Math.min(arcOrigin.y, arcOriginLimits.ymax);
       arcOrigin.y = Math.max(arcOrigin.y, arcOriginLimits.ymin);
 
-          d3.select('#theClipPath')
+      d3.select('#theClipPath')
         .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")");
-    d3.select('#refGroup')
-      .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")");
+      d3.select('#refGroup')
+        .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")");
 
     }
 
     function setSvgToImageScaleFactor() {
       whiteSpace = {};
-      if( imageObj.width === Math.max(imageObj.width, imageObj.height)) {
-        scaleFactor = imageObj.width/width;
+      if (imageObj.width === Math.max(imageObj.width, imageObj.height)) {
+        scaleFactor = imageObj.width / width;
         whiteSpace.x = 0;
-        whiteSpace.y = (height-(imageObj.height/scaleFactor))/2;
+        whiteSpace.y = (height - (imageObj.height / scaleFactor)) / 2;
       }
       else {
-        scaleFactor = imageObj.height/height;
-        whiteSpace.x = (width-(imageObj.width/scaleFactor))/2;
+        scaleFactor = imageObj.height / height;
+        whiteSpace.x = (width - (imageObj.width / scaleFactor)) / 2;
         whiteSpace.y = 0;
       }
 
     }
 
     function dragmove(d) {
-    arcOrigin.x += d3.event.dx;
-    arcOrigin.y += d3.event.dy;
+      arcOrigin.x += d3.event.dx;
+      arcOrigin.y += d3.event.dy;
 
-    constrainSampler();
+      constrainSampler();
 
-    imageOrigin.x = -(arcOrigin.x-whiteSpace.x);
-    imageOrigin.y = -(arcOrigin.y-whiteSpace.y);
+      imageOrigin.x = -(arcOrigin.x - whiteSpace.x);
+      imageOrigin.y = -(arcOrigin.y - whiteSpace.y);
 
-    updateCanvas();
+      updateCanvas();
 
     }
 
     function updateCanvas() {
 
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    draw(imageObj);
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      draw(imageObj);
 
     }
 
     function drawClipping(image) {
 
-       //draw arc
+      //draw arc
       context.beginPath();
-      context.moveTo(0,0);
-      context.arc(0,0, radius, startAngle, endAngle);
+      context.moveTo(0, 0);
+      context.arc(0, 0, radius, startAngle, endAngle);
       context.closePath();
 
       context.clip();
-      context.drawImage(image, imageOrigin.x, imageOrigin.y, image.width/scaleFactor, image.height/scaleFactor);
+      context.drawImage(image, imageOrigin.x, imageOrigin.y, image.width / scaleFactor, image.height / scaleFactor);
     }
 
     function draw(image) {
 
-      var wedgeAngle = Math.abs(endAngle-startAngle);
-      var rotations = Math.PI/wedgeAngle;
+      var wedgeAngle = Math.abs(endAngle - startAngle);
+      var rotations = Math.PI / wedgeAngle;
       context.save();
-      for(var j=0; j<rotations; j++) {
+      for (var j = 0; j < rotations; j++) {
         //context.save();
-        context.rotate(2*wedgeAngle)
-        for(var i=0; i<2;i++) {
+        context.rotate(2 * wedgeAngle)
+        for (var i = 0; i < 2; i++) {
           context.save();
-          context.scale(1,Math.pow(-1, i));
+          context.scale(1, Math.pow(-1, i));
           drawClipping(image);
           context.restore();
         }
       }
-    context.restore();
-        dataURL = canvas.toDataURL();
-       document.getElementById('downloadLink').href = dataURL;
+      context.restore();
+      dataURL = canvas.toDataURL();
+      document.getElementById('downloadLink').href = dataURL;
     }
 
 
-//////////////////////execute//////////////////////
+    //////////////////////execute//////////////////////
 
 
-//jquery
-$(document).ready(function(){
-    $('#fselect').change(fileSelected);
+    //jquery
+    $(document).ready(function () {
+      $('#fselect').change(fileSelected);
     });
     //interaction
     var width = 300,
-        height = 300,
-        padding = 0;
+      height = 300,
+      padding = 0;
     var scaleFactor, whiteSpace, arcOriginLimits;
 
     var drag = d3.behavior.drag()
-        .origin(arcOrigin)
-        .on("drag", dragmove);
-    
+      .origin(arcOrigin)
+      .on("drag", dragmove);
+
     var imgPath = "data/provided_ice.JPG";
 
     //sampler setup//
     var svg = d3.select('#image')
-              .append('svg')
-                .attr('width', width)
-                .attr('height', height)
-                .attr('id', 'imageSVG');
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('id', 'imageSVG');
 
     //add def tag
     var defsTag = svg.append('defs');
 
 
     var srcImage = svg.append('g')
-          .attr('id', 'imageGroup')
-          .attr('opacity', .5)
-          .attr("transform", "translate(" + (padding/2) + "," + (padding/2) + ")")
-        .append('svg:image')
-          .attr('id', 'theImage')
-          .attr('x', 0)
-          .attr('y', 0)
-          .attr("class", "dot")
-          .attr('width', width)
-          .attr('height', height)
-          .attr('xlink:href', imgPath);
+      .attr('id', 'imageGroup')
+      .attr('opacity', .5)
+      .attr("transform", "translate(" + (padding / 2) + "," + (padding / 2) + ")")
+      .append('svg:image')
+      .attr('id', 'theImage')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr("class", "dot")
+      .attr('width', width)
+      .attr('height', height)
+      .attr('xlink:href', imgPath);
 
     //define path for clipping
-    var pieAngle = Math.PI/8;
-    var pieStartAngle = Math.PI/2;
-    var arcOrigin = {x: width/3, y:height/3};
+    var pieAngle = Math.PI / 8;
+    var pieStartAngle = Math.PI / 2;
+    var arcOrigin = { x: width / 3, y: height / 3 };
     var arc = d3.svg.arc();
-    var arcObj = {innerRadius: 0,
-                  outerRadius: width/3,
-                  startAngle: pieStartAngle,
-                  endAngle: pieStartAngle+pieAngle};
+    var arcObj = {
+      innerRadius: 0,
+      outerRadius: width / 3,
+      startAngle: pieStartAngle,
+      endAngle: pieStartAngle + pieAngle
+    };
 
 
     var pathTag = defsTag.selectAll('path').data([arcObj])
       .enter().append('path')
-            .attr('id', 'arcPath')
-            .attr('class', 'geom')
-            .attr('d', function(d) {return arc(d);});
+      .attr('id', 'arcPath')
+      .attr('class', 'geom')
+      .attr('d', function (d) { return arc(d); });
 
     var clipTag = defsTag.append('clipPath')
-                          .attr('id', 'theClipPath')
-                          .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")");
+      .attr('id', 'theClipPath')
+      .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")");
 
     clipTag.selectAll('path').data([arcObj])
       .enter().append('path')
-            .attr('class', 'geom')
-            .attr('d', function(d) {return arc(d);});
+      .attr('class', 'geom')
+      .attr('d', function (d) { return arc(d); });
 
     //draw clipping path for reference
     svg.append('g')
-        .attr('id', 'refGroup')
-        .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")")
+      .attr('id', 'refGroup')
+      .attr("transform", "translate(" + (arcOrigin.x) + "," + (arcOrigin.y) + ")")
       .append('svg:use')
-        .attr('xlink:href', '#arcPath')
-        .attr('class', 'geom');
+      .attr('xlink:href', '#arcPath')
+      .attr('class', 'geom');
 
 
     //add clipped image
     svg.append('svg:use')
-        .attr('id', 'wedge')
-        .attr('xlink:href', '#theImage')
-        .attr('opacity', 1)
-        .attr('clip-path', 'url(#theClipPath)')
-        .call(drag);
+      .attr('id', 'wedge')
+      .attr('xlink:href', '#theImage')
+      .attr('opacity', 1)
+      .attr('clip-path', 'url(#theClipPath)')
+      .call(drag);
 
 
     //canvas drawing//
-      //setup
-      var canvas = document.getElementById('kaleidoCanvas');
-      var context = canvas.getContext('2d');
-      var x = canvas.width / 2;
-      var y = canvas.height / 2;
-      var radius = arcObj.outerRadius;
-      var startAngle = 0;
-      var endAngle = startAngle+pieAngle;
-      var counterClockwise = false;
-      var imageOrigin;
+    //setup
+    var canvas = document.getElementById('kaleidoCanvas');
+    var context = canvas.getContext('2d');
+    var x = canvas.width / 2;
+    var y = canvas.height / 2;
+    var radius = arcObj.outerRadius;
+    var startAngle = 0;
+    var endAngle = startAngle + pieAngle;
+    var counterClockwise = false;
+    var imageOrigin;
 
-      //center kaleidoscope
-      context.save();
-      context.translate(x,y);
-      context.scale((canvas.width/2)/radius, (canvas.width/2)/radius);
+    //center kaleidoscope
+    context.save();
+    context.translate(x, y);
+    context.scale((canvas.width / 2) / radius, (canvas.width / 2) / radius);
 
-      var imageObj = new Image();
-      var dataURL;
+    var imageObj = new Image();
+    var dataURL;
 
-      loadCanvasImage();
+    loadCanvasImage();
 
 
-    </script>
-  </body>
+  </script>
+</body>
+
 </html>
