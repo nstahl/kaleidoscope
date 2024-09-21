@@ -11,6 +11,8 @@
   <style type="text/css">
     body {
       padding-top: 10px;
+      background-color: black;
+      color: white;
     }
 
     table {
@@ -234,7 +236,28 @@
 
     }
 
-    function dragmove(d) {
+    function handleClick() {
+      var coords = d3.mouse(this);
+      arcOrigin.x = coords[0];
+      arcOrigin.y = coords[1];
+
+      // Constrain the new origin within the image bounds
+      constrainSampler();
+
+      // Update the position of the clipped image and related elements
+      d3.select('#theClipPath')
+        .attr("transform", "translate(" + arcOrigin.x + "," + arcOrigin.y + ")");
+      d3.select('#refGroup')
+        .attr("transform", "translate(" + arcOrigin.x + "," + arcOrigin.y + ")");
+
+      // Update the canvas
+      imageOrigin.x = -(arcOrigin.x - whiteSpace.x);
+      imageOrigin.y = -(arcOrigin.y - whiteSpace.y);
+      updateCanvas();
+    }
+
+    function handleDrag(d) {
+
       arcOrigin.x += d3.event.dx;
       arcOrigin.y += d3.event.dy;
 
@@ -302,7 +325,7 @@
 
     var drag = d3.behavior.drag()
       .origin(arcOrigin)
-      .on("drag", dragmove);
+      .on("drag", handleDrag);
 
     var imgPath = "data/provided_ice.JPG";
 
@@ -311,11 +334,11 @@
       .append('svg')
       .attr('width', width)
       .attr('height', height)
-      .attr('id', 'imageSVG');
+      .attr('id', 'imageSVG')
+      .on('click', handleClick);
 
     //add def tag
     var defsTag = svg.append('defs');
-
 
     var srcImage = svg.append('g')
       .attr('id', 'imageGroup')
@@ -365,7 +388,6 @@
       .append('svg:use')
       .attr('xlink:href', '#arcPath')
       .attr('class', 'geom');
-
 
     //add clipped image
     svg.append('svg:use')
