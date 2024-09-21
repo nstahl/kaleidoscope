@@ -294,16 +294,33 @@
       var wedgeAngle = Math.abs(endAngle - startAngle);
       var rotations = Math.PI / wedgeAngle;
       context.save();
+
+      // Add a small overlap to each wedge
+      var overlapAngle = 0.01;
+
       for (var j = 0; j < rotations; j++) {
-        //context.save();
         context.rotate(2 * wedgeAngle)
         for (var i = 0; i < 2; i++) {
           context.save();
           context.scale(1, Math.pow(-1, i));
-          drawClipping(image);
+
+          // Extend the clipping area slightly
+          context.beginPath();
+          context.moveTo(0, 0);
+          context.arc(0, 0, radius, startAngle - overlapAngle, endAngle + overlapAngle);
+          context.closePath();
+          context.clip();
+
+          // Draw the image with a slight scale up
+          var scale = 1.001;
+          context.scale(scale, scale);
+          context.drawImage(image, imageOrigin.x / scale, imageOrigin.y / scale,
+            image.width / (scaleFactor * scale), image.height / (scaleFactor * scale));
+
           context.restore();
         }
       }
+
       context.restore();
       dataURL = canvas.toDataURL();
       document.getElementById('downloadLink').href = dataURL;
