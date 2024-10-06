@@ -109,8 +109,7 @@
     <div class="row">
 
       <div class="span4">
-        <div id="image"></div>
-        <!-- provided_ice.JPG provided_midtown.jpg provided_sky.JPG -->
+        <div id="samplerImage"></div>
         <!--thumbnails-->
         <div class="row">
           <div class="span1">
@@ -127,12 +126,12 @@
           </div>
         </div>
 
-        <div class="fileinputs">
+        <!-- <div class="fileinputs">
           <input id="fselect" name="fileselect" type="file" class="file" />
           <div class="fakefile">
             <h5>Upload Your Image</h5>
           </div>
-        </div><!--/fileinputs-->
+        </div>  -->
 
 
       </div><!--/span4-->
@@ -188,7 +187,7 @@
         setSvgToImageScaleFactor();
         setArcOriginLimits();
         imageOrigin = { x: -(arcOrigin.x - whiteSpace.x), y: -(arcOrigin.y - whiteSpace.y) };
-        draw(imageObj);
+        drawKaleidoscope(imageObj);
 
       };
       imageObj.src = imgPath;
@@ -273,7 +272,7 @@
     function updateCanvas() {
 
       context.clearRect(0, 0, canvas.width, canvas.height);
-      draw(imageObj);
+      drawKaleidoscope(imageObj);
 
     }
 
@@ -289,7 +288,7 @@
       context.drawImage(image, imageOrigin.x, imageOrigin.y, image.width / scaleFactor, image.height / scaleFactor);
     }
 
-    function draw(image) {
+    function drawKaleidoscope(image) {
 
       var wedgeAngle = Math.abs(endAngle - startAngle);
       var rotations = Math.PI / wedgeAngle;
@@ -347,7 +346,7 @@
     var imgPath = "data/provided_ice.JPG";
 
     //sampler setup//
-    var svg = d3.select('#image')
+    var svg = d3.select('#samplerImage')
       .append('svg')
       .attr('width', width)
       .attr('height', height)
