@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const tileWidth = 300;
 
+    const thumbnailSize = 200;
+    let thumbnailWidth;
+    let thumbnailHeight;
+
     // Check if the browser supports canvas
     if (kaleidoscopeCanvas.getContext) {
         setupKaleidoscope();
@@ -29,6 +33,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const ctx = kaleidoscopeCanvas.getContext('2d');
         ctx.fillStyle = "rgb(200 0 0)";
         ctx.fillRect(0, 0, kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
+    }
+
+    function setupMap() {
+        console.log('Setup map');
+        const scaleToFitX = thumbnailSize / offscreenCanvas.width;
+        const scaleToFitY = thumbnailSize / offscreenCanvas.height;
+
+        if (scaleToFitX < scaleToFitY) {
+            // fit to width
+            thumbnailWidth = thumbnailSize;
+            thumbnailHeight = offscreenCanvas.height * scaleToFitX;
+        } else {
+            // fit to height
+            thumbnailWidth = offscreenCanvas.width * scaleToFitY;
+            thumbnailHeight = thumbnailSize;
+        }
+
+        console.log('thumbnailWidth', thumbnailWidth);
+        console.log('thumbnailHeight', thumbnailHeight);
     }
 
     function loadImage() {
@@ -50,10 +73,50 @@ document.addEventListener('DOMContentLoaded', function() {
           offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
 
           console.log('Image loaded');
+          setupMap();
           trackMousePosition();
         });
         
         sourceImage.src = "canaletto.jpeg";
+    }
+
+    function drawMap(x, y) {
+
+        const ctx = kaleidoscopeCanvas.getContext('2d');
+        const padding = 10;
+
+        const thumbnailX = kaleidoscopeCanvas.width - thumbnailWidth - padding;
+        const thumbnailY = kaleidoscopeCanvas.height - thumbnailHeight - padding;
+
+        // Draw thumbnail
+        ctx.drawImage(sourceImage, thumbnailX, thumbnailY, thumbnailWidth, thumbnailHeight);
+
+        // Draw border around thumbnail
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(thumbnailX, thumbnailY, thumbnailWidth, thumbnailHeight);
+
+        // Calculate dot position
+        const dotX = thumbnailX + (x / offscreenCanvas.width) * thumbnailWidth;
+        const dotY = thumbnailY + (y / offscreenCanvas.height) * thumbnailHeight;
+
+        // Draw glowing dot
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fill();
+
+        // Add glow effect
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'white';
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+
+        // Reset shadow
+        ctx.shadowBlur = 0;
+
     }
 
     function drawTile(ctx, x, y) {
@@ -114,6 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const y = (event.clientY - rect.top) * convertKaleidoscopeToOffscreenYCoords;
             drawClipping(x, y);
             drawKaleidoscope(x, y);
+            drawMap(x, y);
         });
     }
 
