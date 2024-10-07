@@ -10,8 +10,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // source image
     let sourceImage = new Image();
+    
+    let convertKaleidoscopeToOffscreenXCoords = 1;
+    let convertKaleidoscopeToOffscreenYCoords = 1;
 
-    const tileWidth = 200;
+    const tileWidth = 300;
 
     // Check if the browser supports canvas
     if (kaleidoscopeCanvas.getContext) {
@@ -35,12 +38,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const offscreenCtx = offscreenCanvas.getContext('2d');
 
         sourceImage.addEventListener("load", () => {
-          offscreenCtx.drawImage(sourceImage, 0, 0);
+          // Set the offscreen canvas size to the source image size
+          offscreenCanvas.width = sourceImage.width;
+          offscreenCanvas.height = sourceImage.height;
+
+          // Calculate the scaling factor to fit the image within the canvas
+          convertKaleidoscopeToOffscreenXCoords = offscreenCanvas.width / kaleidoscopeCanvas.width;
+          convertKaleidoscopeToOffscreenYCoords = offscreenCanvas.height / kaleidoscopeCanvas.height;
+
+          // Clear the canvas before drawing
+          offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+
           console.log('Image loaded');
           trackMousePosition();
         });
         
-        sourceImage.src = "trees.jpeg";
+        sourceImage.src = "canaletto.jpeg";
     }
 
     function drawTile(ctx, x, y) {
@@ -48,7 +61,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function drawKaleidoscope(x, y) {
-        console.log('Drawing kaleidoscope');
         const ctx = kaleidoscopeCanvas.getContext('2d');
 
         ctx.clearRect(0, 0, kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
@@ -60,10 +72,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         for (let i = 0; i < 8; i++) {
             ctx.rotate(Math.PI / 4);
+            ctx.save();
             drawTile(ctx, x, y);
             ctx.save();
             ctx.scale(1, -1);
             drawTile(ctx, x, y);
+            ctx.restore();
             ctx.restore();
         }
 
@@ -71,8 +85,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }   
 
     function drawClipping(x, y) {
-        console.log('Drawing clipping');
-
         const ctx = offscreenCanvas.getContext('2d');
 
         // Save the current canvas state
@@ -88,11 +100,8 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.arc(x, y, tileWidth, 0, Math.PI / 8);
         ctx.closePath();
         ctx.clip();
-        // Draw the image
-        ctx.drawImage(sourceImage, 0, 0);
 
-        // Get the clipped image data
-        tileImageData = ctx.getImageData(x, y, tileWidth, tileWidth);
+        ctx.drawImage(sourceImage, 0, 0);
 
         // Restore the canvas state
         ctx.restore();
@@ -101,8 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function trackMousePosition() {
         kaleidoscopeCanvas.addEventListener('mousemove', function(event) {
             const rect = kaleidoscopeCanvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
+            const x = (event.clientX - rect.left) * convertKaleidoscopeToOffscreenXCoords;
+            const y = (event.clientY - rect.top) * convertKaleidoscopeToOffscreenYCoords;
             drawClipping(x, y);
             drawKaleidoscope(x, y);
         });
