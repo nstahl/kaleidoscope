@@ -7,8 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const offscreenSrcImgCanvas = new OffscreenCanvas(0, 0);
     const offscreenKaleidoscopeTileCanvas = new OffscreenCanvas(kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
 
-    const drawTiling = true;
-
     // source image
     let sourceImage = new Image();
     
@@ -213,5 +211,34 @@ document.addEventListener('DOMContentLoaded', function() {
             drawMap(x, y);
         });
     }
+
+    // controls
+
+    let drawTiling = true;
+
+    // Add event listener for 't' key press
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 't' || event.key === 'T') {
+            drawTiling = !drawTiling;
+            // Redraw the kaleidoscope with the updated drawTiling value
+            const rect = kaleidoscopeCanvas.getBoundingClientRect();
+            const x = (event.clientX - rect.left) * convertKaleidoscopeToOffscreenXCoords;
+            const y = (event.clientY - rect.top) * convertKaleidoscopeToOffscreenYCoords;
+            drawClipping(x, y);
+            drawKaleidoscope(x, y);
+            drawMap(x, y);
+        }
+    });
+
+    let isGrayscale = false;
+
+    // Modify the event listener for 'g' key press
+    document.addEventListener('keydown', function(event) {
+    if (event.key === 'g' || event.key === 'G') {
+        isGrayscale = !isGrayscale;
+        kaleidoscopeCanvas.classList.toggle('grayscale');
+        // No need to redraw the kaleidoscope
+    }
+    });
 
 });
