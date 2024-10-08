@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // offscreen canvases
     const offscreenSrcImgCanvas = new OffscreenCanvas(0, 0);
-    const offscreenKaleidoscopeTileCanvas = new OffscreenCanvas(kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
+    const offscreenTileCanvas = new OffscreenCanvas(kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
 
     // source image
     let sourceImage = new Image();
@@ -147,16 +147,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function drawTileOffscreen(x, y) {
-        offscreenKaleidoscopeTileCanvas.width = 2 * clippingTileWidth;
-        offscreenKaleidoscopeTileCanvas.height = 2 * clippingTileWidth;
+        offscreenTileCanvas.width = 2 * clippingTileWidth;
+        offscreenTileCanvas.height = 2 * clippingTileWidth;
 
         // draw tile offscreen
-        const ctx = offscreenKaleidoscopeTileCanvas.getContext('2d');
+        const ctx = offscreenTileCanvas.getContext('2d');
 
-        ctx.clearRect(0, 0, offscreenKaleidoscopeTileCanvas.width, offscreenKaleidoscopeTileCanvas.height);
+        ctx.clearRect(0, 0, offscreenTileCanvas.width, offscreenTileCanvas.height);
 
-        const centerX = Math.floor(offscreenKaleidoscopeTileCanvas.width / 2);
-        const centerY = Math.floor(offscreenKaleidoscopeTileCanvas.height / 2);
+        const centerX = Math.floor(offscreenTileCanvas.width / 2);
+        const centerY = Math.floor(offscreenTileCanvas.height / 2);
 
         ctx.save();
         ctx.translate(centerX, centerY);
@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
             for (let i = 0; i <= 6; i += 2) {
                 ctx.save();
                 ctx.translate(i * clippingTileWidth, 0);
-                ctx.drawImage(offscreenKaleidoscopeTileCanvas, 0, 0);
+                ctx.drawImage(offscreenTileCanvas, 0, 0);
                 ctx.restore();
             }
             // // Draw top and bottom rows
@@ -201,14 +201,14 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.translate(kaleidoscopeCanvas.width / 2, 
                           kaleidoscopeCanvas.height / 2);
             
-            const xScalingFactor = kaleidoscopeCanvas.width / offscreenKaleidoscopeTileCanvas.width;
-            const yScalingFactor = kaleidoscopeCanvas.height / offscreenKaleidoscopeTileCanvas.height;
+            const xScalingFactor = kaleidoscopeCanvas.width / offscreenTileCanvas.width;
+            const yScalingFactor = kaleidoscopeCanvas.height / offscreenTileCanvas.height;
             const scalingFactor = Math.min(xScalingFactor, yScalingFactor);
 
             ctx.scale(scalingFactor, scalingFactor);
-            ctx.drawImage(offscreenKaleidoscopeTileCanvas, 
-                          -offscreenKaleidoscopeTileCanvas.width / 2, 
-                          -offscreenKaleidoscopeTileCanvas.height / 2);
+            ctx.drawImage(offscreenTileCanvas, 
+                          -offscreenTileCanvas.width / 2, 
+                          -offscreenTileCanvas.height / 2);
             ctx.restore();
         }
 
