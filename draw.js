@@ -2,8 +2,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Get the canvas element
     const kaleidoscopeCanvas = document.getElementById('kaleidoscope_canvas');
-    // Create an offscreen canvas
 
+    // offscreen canvases
     const offscreenSrcImgCanvas = new OffscreenCanvas(0, 0);
     const offscreenKaleidoscopeTileCanvas = new OffscreenCanvas(kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
 
@@ -13,12 +13,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let convertKaleidoscopeToOffscreenXCoords = 1;
     let convertKaleidoscopeToOffscreenYCoords = 1;
 
-    const tileWidth = 300;
+    const clippingTileWidth = 300;
 
+    const gridYOffset = Math.sqrt(3*clippingTileWidth*clippingTileWidth);
+
+    // variables for image thumbnail
     const thumbnailSize = 200;
-
-    const gridYOffset = Math.sqrt(3*tileWidth*tileWidth);
-
     let thumbnailWidth;
     let thumbnailHeight;
 
@@ -35,14 +35,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const ctx = kaleidoscopeCanvas.getContext('2d');
         ctx.fillStyle = "rgb(200 0 0)";
         ctx.fillRect(0, 0, kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
+        // Add these lines to enable image smoothing
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
     }
 
-    function setupMap() {
-        console.log('Setup map');
+    function setupThumbnail() {
+        console.log('Setup thumbnail');
         const scaleToFitX = thumbnailSize / offscreenSrcImgCanvas.width;
         const scaleToFitY = thumbnailSize / offscreenSrcImgCanvas.height;
 
-        console.log('Scaling factor', Math.min(scaleToFitX, scaleToFitY));
+        console.log('Thumbnail scaling factor', Math.min(scaleToFitX, scaleToFitY));
 
         if (scaleToFitX < scaleToFitY) {
             // fit to width
@@ -61,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadImage() {
         console.log('Load source image into offscreen canvas');
 
-
         const offscreenCtx = offscreenSrcImgCanvas.getContext('2d');
 
         sourceImage.addEventListener("load", () => {
@@ -69,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
           offscreenSrcImgCanvas.width = sourceImage.width;
           offscreenSrcImgCanvas.height = sourceImage.height;
 
-          // Calculate the scaling factor to fit the image within the canvas
+          // Calculate the scaling factor to convert kaleidoscope canvas coordinates to offscreen canvas coordinates
           convertKaleidoscopeToOffscreenXCoords = offscreenSrcImgCanvas.width / kaleidoscopeCanvas.width;
           convertKaleidoscopeToOffscreenYCoords = offscreenSrcImgCanvas.height / kaleidoscopeCanvas.height;
 
@@ -77,14 +79,14 @@ document.addEventListener('DOMContentLoaded', function() {
           offscreenCtx.clearRect(0, 0, offscreenSrcImgCanvas.width, offscreenSrcImgCanvas.height);
 
           console.log('Image loaded');
-          setupMap();
+          setupThumbnail();
           trackMousePosition();
         });
         
         sourceImage.src = "man_with_lion.jpeg";
     }
 
-    function drawMap(x, y) {
+    function drawThumbnail(x, y) {
 
         const ctx = kaleidoscopeCanvas.getContext('2d');
         ctx.imageSmoothingEnabled = true;
@@ -126,54 +128,88 @@ document.addEventListener('DOMContentLoaded', function() {
 
     }
 
-    function drawTile(ctx, x, y) {
-        ctx.drawImage(offscreenSrcImgCanvas, x, y, tileWidth, tileWidth, 0, 0, tileWidth, tileWidth);
+    function drawClippingTile(ctx, x, y) {
+        ctx.drawImage(offscreenSrcImgCanvas, x, y, clippingTileWidth, clippingTileWidth, 0, 0, clippingTileWidth, clippingTileWidth);
     }
 
-    function drawKaleidoscope(x, y) {
-        let ctx = offscreenKaleidoscopeTileCanvas.getContext('2d');
+    function drawTile(ctx, x, y) {
+        // draw 16 clipping tiles in radial pattern
+        for (let i = 0; i < 8; i++) {
+            ctx.rotate(Math.PI / 4);
+            ctx.save();
+            drawClippingTile(ctx, x, y);
+            ctx.save();
+            ctx.scale(1, -1);
+            drawClippingTile(ctx, x, y);
+            ctx.restore();
+            ctx.restore();
+        }
+    }
+
+    function drawTileOffscreen(x, y) {
+        offscreenKaleidoscopeTileCanvas.width = 2 * clippingTileWidth;
+        offscreenKaleidoscopeTileCanvas.height = 2 * clippingTileWidth;
+
+        // draw tile offscreen
+        const ctx = offscreenKaleidoscopeTileCanvas.getContext('2d');
 
         ctx.clearRect(0, 0, offscreenKaleidoscopeTileCanvas.width, offscreenKaleidoscopeTileCanvas.height);
+
         const centerX = Math.floor(offscreenKaleidoscopeTileCanvas.width / 2);
         const centerY = Math.floor(offscreenKaleidoscopeTileCanvas.height / 2);
 
         ctx.save();
         ctx.translate(centerX, centerY);
-
-        const tilingScalingFactor = .5;
-        if (drawTiling) {
-            ctx.scale(tilingScalingFactor, tilingScalingFactor);
-        }
-
-        for (let i = 0; i < 8; i++) {
-            ctx.rotate(Math.PI / 4);
-            ctx.save();
-            drawTile(ctx, x, y);
-            ctx.save();
-            ctx.scale(1, -1);
-            drawTile(ctx, x, y);
-            ctx.restore();
-            ctx.restore();
-        }
+        // draw tile at center of offscreen canvas
+        drawTile(ctx, x, y);
         ctx.restore();
+    }
 
-        ctx = kaleidoscopeCanvas.getContext('2d');
+    function drawKaleidoscope(x, y) {
+
+        drawTileOffscreen(x, y);
+
+        // draw tile into kaleidoscope canvas
+        const ctx = kaleidoscopeCanvas.getContext('2d');
+
+        const tilingScalingFactor = .6;
+
         ctx.clearRect(0, 0, kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
-        if (drawTiling) {
+
+        if (isTiling) {
+            ctx.save();
+            ctx.scale(tilingScalingFactor, tilingScalingFactor);
             // Draw horizontal row
-            for (let i = -4; i <= 4; i += 2) {
-                ctx.drawImage(offscreenKaleidoscopeTileCanvas, i * tileWidth * tilingScalingFactor, 0);
+            for (let i = 0; i <= 6; i += 2) {
+                ctx.save();
+                ctx.translate(i * clippingTileWidth, 0);
+                ctx.drawImage(offscreenKaleidoscopeTileCanvas, 0, 0);
+                ctx.restore();
             }
-            // Draw top and bottom rows
-            for (let i = -5; i <= 5; i += 2) {
-                for (let j = -5; j <= 5; j += 2) {
-                    ctx.drawImage(offscreenKaleidoscopeTileCanvas, 
-                        i * tileWidth * tilingScalingFactor, 
-                        j * gridYOffset * tilingScalingFactor);
-                }
-            }
+            // // Draw top and bottom rows
+            // for (let i = -5; i <= 5; i += 2) {
+            //     for (let j = -1; j <= 1; j += 2) {
+            //         ctx.drawImage(offscreenKaleidoscopeTileCanvas, 
+            //             i * clippingTileWidth, 
+            //             j * gridYOffset);
+            //     }
+            // }
+            ctx.restore();
+
         } else {
-            ctx.drawImage(offscreenKaleidoscopeTileCanvas, 0, 0);
+            ctx.save();
+            ctx.translate(kaleidoscopeCanvas.width / 2, 
+                          kaleidoscopeCanvas.height / 2);
+            
+            const xScalingFactor = kaleidoscopeCanvas.width / offscreenKaleidoscopeTileCanvas.width;
+            const yScalingFactor = kaleidoscopeCanvas.height / offscreenKaleidoscopeTileCanvas.height;
+            const scalingFactor = Math.min(xScalingFactor, yScalingFactor);
+
+            ctx.scale(scalingFactor, scalingFactor);
+            ctx.drawImage(offscreenKaleidoscopeTileCanvas, 
+                          -offscreenKaleidoscopeTileCanvas.width / 2, 
+                          -offscreenKaleidoscopeTileCanvas.height / 2);
+            ctx.restore();
         }
 
     }   
@@ -190,8 +226,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Create a clipping path
         ctx.beginPath();
         ctx.moveTo(x, y);
-        ctx.lineTo(x + tileWidth, y);
-        ctx.arc(x, y, tileWidth, 0, Math.PI / 8);
+        ctx.lineTo(x + clippingTileWidth, y);
+        ctx.arc(x, y, clippingTileWidth, 0, Math.PI / 8);
         ctx.closePath();
         ctx.clip();
 
@@ -208,25 +244,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const y = (event.clientY - rect.top) * convertKaleidoscopeToOffscreenYCoords;
             drawClipping(x, y);
             drawKaleidoscope(x, y);
-            drawMap(x, y);
+            drawThumbnail(x, y);
         });
     }
 
     // controls
 
-    let drawTiling = true;
+    let isTiling = false;
 
     // Add event listener for 't' key press
     document.addEventListener('keydown', function(event) {
         if (event.key === 't' || event.key === 'T') {
-            drawTiling = !drawTiling;
+            isTiling = !isTiling;
             // Redraw the kaleidoscope with the updated drawTiling value
             const rect = kaleidoscopeCanvas.getBoundingClientRect();
             const x = (event.clientX - rect.left) * convertKaleidoscopeToOffscreenXCoords;
             const y = (event.clientY - rect.top) * convertKaleidoscopeToOffscreenYCoords;
             drawClipping(x, y);
             drawKaleidoscope(x, y);
-            drawMap(x, y);
+            drawThumbnail(x, y);
         }
     });
 
