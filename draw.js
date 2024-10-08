@@ -172,18 +172,27 @@ document.addEventListener('DOMContentLoaded', function() {
         // draw tile into kaleidoscope canvas
         const ctx = kaleidoscopeCanvas.getContext('2d');
 
-        const tilingScalingFactor = .6;
-
         ctx.clearRect(0, 0, kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
 
         if (isTiling) {
             ctx.save();
-            ctx.scale(tilingScalingFactor, tilingScalingFactor);
-            // Draw horizontal row
-            for (let i = 0; i <= 6; i += 2) {
+            ctx.scale(.4, .4);
+            ctx.translate(-offscreenTileCanvas.width / 2, -offscreenTileCanvas.height / 2);
+
+            for (let j = 0; j < 4; j++) {
                 ctx.save();
-                ctx.translate(i * clippingTileWidth, 0);
-                ctx.drawImage(offscreenTileCanvas, 0, 0);
+
+                ctx.translate(0, j * gridYOffset);
+                // Draw horizontal row
+                if (j % 2 != 0) {
+                    ctx.translate(offscreenTileCanvas.width / 2, 0);
+                }
+                for (let i = 0; i < 7; i ++) {
+                    ctx.save();
+                    ctx.translate(i * offscreenTileCanvas.width, 0);
+                    ctx.drawImage(offscreenTileCanvas, 0, 0);
+                    ctx.restore();
+                }
                 ctx.restore();
             }
             // // Draw top and bottom rows
