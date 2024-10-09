@@ -3,7 +3,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get the canvas element
     const kaleidoscopeCanvas = document.getElementById('kaleidoscope_canvas');
 
-
+    let sampleX = 0;
+    let sampleY = 0;
 
     // offscreen canvases
     const offscreenSrcImgCanvas = new OffscreenCanvas(0, 0);
@@ -39,11 +40,9 @@ document.addEventListener('DOMContentLoaded', function() {
         convertKaleidoscopeToOffscreenYCoords = offscreenSrcImgCanvas.height / kaleidoscopeCanvas.height;
         // Redraw the kaleidoscope
         if (sourceImage.complete) {
-            const x = kaleidoscopeCanvas.width / 2 * convertKaleidoscopeToOffscreenXCoords;
-            const y = kaleidoscopeCanvas.height / 2 * convertKaleidoscopeToOffscreenYCoords;
-            drawClipping(x, y);
-            drawKaleidoscope(x, y);
-            drawThumbnail(x, y);
+            drawClipping();
+            drawKaleidoscope();
+            drawThumbnail();
         }
     }
     
@@ -54,11 +53,21 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupKaleidoscope() {
         console.log('Setup kaleidoscope canvas');
         const ctx = kaleidoscopeCanvas.getContext('2d');
-        ctx.fillStyle = "rgb(200 0 0)";
-        ctx.fillRect(0, 0, kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
         // Add these lines to enable image smoothing
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
+
+        // Add touch and mouse event listeners
+        kaleidoscopeCanvas.addEventListener('mousedown', startDrag);
+        kaleidoscopeCanvas.addEventListener('mousemove', drag);
+        kaleidoscopeCanvas.addEventListener('mouseup', endDrag);
+        kaleidoscopeCanvas.addEventListener('mouseleave', endDrag);
+        kaleidoscopeCanvas.addEventListener('mousemove', updatePosition);
+
+        kaleidoscopeCanvas.addEventListener('touchstart', startDrag);
+        kaleidoscopeCanvas.addEventListener('touchmove', drag);
+        kaleidoscopeCanvas.addEventListener('touchend', endDrag);
+        kaleidoscopeCanvas.addEventListener('touchcancel', endDrag);
     }
 
     function setupThumbnail() {
@@ -101,13 +110,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
           console.log('Image loaded');
           setupThumbnail();
-          trackMousePosition();
+          draw();
         });
         
         sourceImage.src = "trees.jpeg";
     }
 
-    function drawThumbnail(x, y) {
+    function draw() {
+        drawClipping();
+        drawKaleidoscope();
+        drawThumbnail();
+    }
+
+    function drawThumbnail() {
+        const x = sampleX;
+        const y = sampleY;
 
         const ctx = kaleidoscopeCanvas.getContext('2d');
         ctx.imageSmoothingEnabled = true;
@@ -149,11 +166,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     }
 
-    function drawClippingTile(ctx, x, y) {
+    function drawClippingTile(ctx) {
+        const x = sampleX;
+        const y = sampleY;
         ctx.drawImage(offscreenSrcImgCanvas, x, y, clippingTileWidth, clippingTileWidth, 0, 0, clippingTileWidth, clippingTileWidth);
     }
 
-    function drawHexagonalTile(ctx, x, y) {
+    function drawHexagonalTile(ctx) {
+        const x = sampleX;
+        const y = sampleY;
         for (let i = 0; i < 6; i++) {
             ctx.save();
             ctx.rotate(i * 2 * Math.PI / 3);
@@ -166,7 +187,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function drawCircularTile(ctx, x, y) {
+    function drawCircularTile(ctx) {
+        const x = sampleX;
+        const y = sampleY;
         // draw 16 clipping tiles in radial pattern
         for (let i = 0; i < 8; i++) {
             ctx.save();
@@ -196,16 +219,16 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.translate(centerX, centerY);
         // draw tile at center of offscreen canvas
         if (isCircular) {
-            drawCircularTile(ctx, x, y);
+            drawCircularTile(ctx);
         } else {
-            drawHexagonalTile(ctx, x, y);
+            drawHexagonalTile(ctx);
         }
         ctx.restore();
     }
 
-    function drawKaleidoscope(x, y) {
+    function drawKaleidoscope() {
 
-        drawTileOffscreen(x, y);
+        drawTileOffscreen();
 
         // draw tile into kaleidoscope canvas
         const ctx = kaleidoscopeCanvas.getContext('2d');
@@ -264,7 +287,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     }   
 
-    function drawCircularClippingPath(x, y, ctx) {
+    function drawCircularClippingPath(ctx) {
+        const x = sampleX;
+        const y = sampleY;
         // Create a clipping path
         ctx.beginPath();
         ctx.moveTo(x, y);
@@ -273,7 +298,9 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.closePath();
     }
 
-    function drawHexagonalClippingPath(x, y, ctx) {
+    function drawHexagonalClippingPath(ctx) {
+        const x = sampleX;
+        const y = sampleY;
         // Create a clipping path
         ctx.beginPath();
         ctx.moveTo(x, y);
@@ -284,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
 
-    function drawClipping(x, y) {
+    function drawClipping() {
         const ctx = offscreenSrcImgCanvas.getContext('2d');
 
         // Save the current canvas state
@@ -294,9 +321,9 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.clearRect(0, 0, offscreenSrcImgCanvas.width, offscreenSrcImgCanvas.height);
 
         if (isCircular) {
-            drawCircularClippingPath(x, y, ctx);
+            drawCircularClippingPath(ctx);
         } else {
-            drawHexagonalClippingPath(x, y, ctx);
+            drawHexagonalClippingPath(ctx);
         }
 
         ctx.clip();
@@ -306,18 +333,39 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.restore();
     }
 
-    function trackMousePosition() {
-        kaleidoscopeCanvas.addEventListener('mousemove', function(event) {
-            const rect = kaleidoscopeCanvas.getBoundingClientRect();
-            const x = (event.clientX - rect.left) * convertKaleidoscopeToOffscreenXCoords;
-            const y = (event.clientY - rect.top) * convertKaleidoscopeToOffscreenYCoords;
-            drawClipping(x, y);
-            drawKaleidoscope(x, y);
-            drawThumbnail(x, y);
-        });
-    }
+    let isDragging = false;
 
-    // controls
+    function startDrag(event) {
+        isDragging = true;
+        updatePosition(event);
+    }
+    
+    function drag(event) {
+        if (isDragging) {
+            updatePosition(event);
+        }
+    }
+    
+    function endDrag() {
+        isDragging = false;
+    }
+    
+    function updatePosition(event) {
+        const rect = kaleidoscopeCanvas.getBoundingClientRect();
+        let clientX, clientY;
+    
+        if (event.type.startsWith('touch')) {
+            clientX = event.touches[0].clientX;
+            clientY = event.touches[0].clientY;
+        } else {
+            clientX = event.clientX;
+            clientY = event.clientY;
+        }
+    
+        sampleX = (clientX - rect.left) * convertKaleidoscopeToOffscreenXCoords;
+        sampleY = (clientY - rect.top) * convertKaleidoscopeToOffscreenYCoords;
+        draw();
+    }
 
     let isTiling = false;
 
@@ -325,13 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('keydown', function(event) {
         if (event.key === 't' || event.key === 'T') {
             isTiling = !isTiling;
-            // Redraw the kaleidoscope with the updated drawTiling value
-            const rect = kaleidoscopeCanvas.getBoundingClientRect();
-            const x = (event.clientX - rect.left) * convertKaleidoscopeToOffscreenXCoords;
-            const y = (event.clientY - rect.top) * convertKaleidoscopeToOffscreenYCoords;
-            drawClipping(x, y);
-            drawKaleidoscope(x, y);
-            drawThumbnail(x, y);
+            draw();
         }
     });
 
@@ -354,12 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
             isCircular = !isCircular;
             console.log(`Switched to ${isCircular ? 'circular' : 'hexagonal'} model`);
             // Redraw the kaleidoscope with the updated model
-            const rect = kaleidoscopeCanvas.getBoundingClientRect();
-            const x = (event.clientX - rect.left) * convertKaleidoscopeToOffscreenXCoords;
-            const y = (event.clientY - rect.top) * convertKaleidoscopeToOffscreenYCoords;
-            drawClipping(x, y);
-            drawKaleidoscope(x, y);
-            drawThumbnail(x, y);
+            draw();
         }
     });
 
