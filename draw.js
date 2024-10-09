@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get the canvas element
     const kaleidoscopeCanvas = document.getElementById('kaleidoscope_canvas');
 
+
+
     // offscreen canvases
     const offscreenSrcImgCanvas = new OffscreenCanvas(0, 0);
     const offscreenTileCanvas = new OffscreenCanvas(kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
@@ -27,6 +29,27 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.log('Canvas is not supported in this browser.');
     }
+
+    // Add this function to resize the canvas
+    function resizeCanvas() {
+        kaleidoscopeCanvas.width = window.innerWidth;
+        kaleidoscopeCanvas.height = window.innerHeight;
+        // Recalculate conversion factors
+        convertKaleidoscopeToOffscreenXCoords = offscreenSrcImgCanvas.width / kaleidoscopeCanvas.width;
+        convertKaleidoscopeToOffscreenYCoords = offscreenSrcImgCanvas.height / kaleidoscopeCanvas.height;
+        // Redraw the kaleidoscope
+        if (sourceImage.complete) {
+            const x = kaleidoscopeCanvas.width / 2 * convertKaleidoscopeToOffscreenXCoords;
+            const y = kaleidoscopeCanvas.height / 2 * convertKaleidoscopeToOffscreenYCoords;
+            drawClipping(x, y);
+            drawKaleidoscope(x, y);
+            drawThumbnail(x, y);
+        }
+    }
+    
+    // Call resizeCanvas initially and on window resize
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
     function setupKaleidoscope() {
         console.log('Setup kaleidoscope canvas');
@@ -92,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const padding = 10;
 
-        const thumbnailX = kaleidoscopeCanvas.width - thumbnailWidth - padding;
+        const thumbnailX = padding;
         const thumbnailY = kaleidoscopeCanvas.height - thumbnailHeight - padding;
 
         // Draw thumbnail
