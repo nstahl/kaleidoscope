@@ -15,8 +15,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const clippingTileWidth = 300;
 
-    const gridYOffset = Math.sqrt(3*clippingTileWidth*clippingTileWidth);
-
     // variables for image thumbnail
     const thumbnailSize = 200;
     let thumbnailWidth;
@@ -83,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
           trackMousePosition();
         });
         
-        sourceImage.src = "man_with_lion.jpeg";
+        sourceImage.src = "trees.jpeg";
     }
 
     function drawThumbnail(x, y) {
@@ -132,11 +130,24 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.drawImage(offscreenSrcImgCanvas, x, y, clippingTileWidth, clippingTileWidth, 0, 0, clippingTileWidth, clippingTileWidth);
     }
 
-    function drawTile(ctx, x, y) {
+    function drawHexagonalTile(ctx, x, y) {
+        for (let i = 0; i < 6; i++) {
+            ctx.save();
+            ctx.rotate(i * 2 * Math.PI / 3);
+            drawClippingTile(ctx, x, y);
+            ctx.save();
+            ctx.scale(1, -1);
+            drawClippingTile(ctx, x, y);
+            ctx.restore();
+            ctx.restore();
+        }
+    }
+
+    function drawCircularTile(ctx, x, y) {
         // draw 16 clipping tiles in radial pattern
         for (let i = 0; i < 8; i++) {
-            ctx.rotate(Math.PI / 4);
             ctx.save();
+            ctx.rotate(i* Math.PI / 4);
             drawClippingTile(ctx, x, y);
             ctx.save();
             ctx.scale(1, -1);
@@ -161,7 +172,11 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.save();
         ctx.translate(centerX, centerY);
         // draw tile at center of offscreen canvas
-        drawTile(ctx, x, y);
+        if (isCircular) {
+            drawCircularTile(ctx, x, y);
+        } else {
+            drawHexagonalTile(ctx, x, y);
+        }
         ctx.restore();
     }
 
@@ -175,34 +190,37 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.clearRect(0, 0, kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
 
         if (isTiling) {
+
+            const gridXStep = isCircular ? 
+                                offscreenTileCanvas.width : 
+                                3 * offscreenTileCanvas.width / 2;
+
+            const gridYStep = isCircular ?
+                                Math.sqrt(3) * clippingTileWidth :
+                                (Math.sqrt(3) / 2) * clippingTileWidth;
+
+            const nrows = isCircular ? 4 : 8;
+
             ctx.save();
             ctx.scale(.4, .4);
             ctx.translate(-offscreenTileCanvas.width / 2, -offscreenTileCanvas.height / 2);
 
-            for (let j = 0; j < 4; j++) {
+            for (let j = 0; j < nrows; j++) {
                 ctx.save();
 
-                ctx.translate(0, j * gridYOffset);
-                // Draw horizontal row
+                ctx.translate(0, j * gridYStep);
                 if (j % 2 != 0) {
-                    ctx.translate(offscreenTileCanvas.width / 2, 0);
+                    ctx.translate(gridXStep / 2, 0);
                 }
                 for (let i = 0; i < 7; i ++) {
                     ctx.save();
-                    ctx.translate(i * offscreenTileCanvas.width, 0);
+                    ctx.translate(i * gridXStep, 0);
                     ctx.drawImage(offscreenTileCanvas, 0, 0);
                     ctx.restore();
                 }
                 ctx.restore();
             }
-            // // Draw top and bottom rows
-            // for (let i = -5; i <= 5; i += 2) {
-            //     for (let j = -1; j <= 1; j += 2) {
-            //         ctx.drawImage(offscreenKaleidoscopeTileCanvas, 
-            //             i * clippingTileWidth, 
-            //             j * gridYOffset);
-            //     }
-            // }
+
             ctx.restore();
 
         } else {
@@ -223,6 +241,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     }   
 
+    function drawCircularClippingPath(x, y, ctx) {
+        // Create a clipping path
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + clippingTileWidth, y);
+        ctx.arc(x, y, clippingTileWidth, 0, Math.PI / 8);
+        ctx.closePath();
+    }
+
+    function drawHexagonalClippingPath(x, y, ctx) {
+        // Create a clipping path
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + clippingTileWidth, y);
+        ctx.lineTo(x + clippingTileWidth / 2, 
+                   y + (Math.sqrt(3) * clippingTileWidth / 2));
+        ctx.closePath();
+    }
+    
+
     function drawClipping(x, y) {
         const ctx = offscreenSrcImgCanvas.getContext('2d');
 
@@ -232,14 +270,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear the entire canvas
         ctx.clearRect(0, 0, offscreenSrcImgCanvas.width, offscreenSrcImgCanvas.height);
 
-        // Create a clipping path
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + clippingTileWidth, y);
-        ctx.arc(x, y, clippingTileWidth, 0, Math.PI / 8);
-        ctx.closePath();
-        ctx.clip();
+        if (isCircular) {
+            drawCircularClippingPath(x, y, ctx);
+        } else {
+            drawHexagonalClippingPath(x, y, ctx);
+        }
 
+        ctx.clip();
         ctx.drawImage(sourceImage, 0, 0);
 
         // Restore the canvas state
@@ -285,5 +322,23 @@ document.addEventListener('DOMContentLoaded', function() {
         // No need to redraw the kaleidoscope
     }
     });
+
+    let isCircular = false;
+
+    // Add event listener for 'm' key press to switch between circular and hexagonal models
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'm' || event.key === 'M') {
+            isCircular = !isCircular;
+            console.log(`Switched to ${isCircular ? 'circular' : 'hexagonal'} model`);
+            // Redraw the kaleidoscope with the updated model
+            const rect = kaleidoscopeCanvas.getBoundingClientRect();
+            const x = (event.clientX - rect.left) * convertKaleidoscopeToOffscreenXCoords;
+            const y = (event.clientY - rect.top) * convertKaleidoscopeToOffscreenYCoords;
+            drawClipping(x, y);
+            drawKaleidoscope(x, y);
+            drawThumbnail(x, y);
+        }
+    });
+
 
 });
