@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let sampleY = 0;
 
     // offscreen canvases
-    const offscreenSrcImgCanvas = new OffscreenCanvas(0, 0);
+    const offscreenSrcImgCanvas = new OffscreenCanvas(kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
     const offscreenTileCanvas = new OffscreenCanvas(kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
 
     // source image
@@ -19,9 +19,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const clippingTileWidth = 300;
 
     // variables for image thumbnail
-    const thumbnailSize = 200;
+    let thumbnailSize = 200;
+
     let thumbnailWidth;
     let thumbnailHeight;
+
+    let isCircular = false;
+    let isGrayscale = false;
+    let isTiling = true;
+    let isDragging = false;
 
     // Check if the browser supports canvas
     if (kaleidoscopeCanvas.getContext) {
@@ -33,13 +39,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add this function to resize the canvas
     function resizeCanvas() {
+        console.log('window.innerWidth', window.innerWidth);
         kaleidoscopeCanvas.width = window.innerWidth;
+        console.log('window.innerHeight', window.innerHeight);
         kaleidoscopeCanvas.height = window.innerHeight;
         // Recalculate conversion factors
         convertKaleidoscopeToOffscreenXCoords = offscreenSrcImgCanvas.width / kaleidoscopeCanvas.width;
         convertKaleidoscopeToOffscreenYCoords = offscreenSrcImgCanvas.height / kaleidoscopeCanvas.height;
         // Redraw the kaleidoscope
         if (sourceImage.complete) {
+            setupThumbnail();
             drawClipping();
             drawKaleidoscope();
             drawThumbnail();
@@ -62,7 +71,6 @@ document.addEventListener('DOMContentLoaded', function() {
         kaleidoscopeCanvas.addEventListener('mousemove', drag);
         kaleidoscopeCanvas.addEventListener('mouseup', endDrag);
         kaleidoscopeCanvas.addEventListener('mouseleave', endDrag);
-        kaleidoscopeCanvas.addEventListener('mousemove', updatePosition);
 
         kaleidoscopeCanvas.addEventListener('touchstart', startDrag);
         kaleidoscopeCanvas.addEventListener('touchmove', drag);
@@ -70,12 +78,28 @@ document.addEventListener('DOMContentLoaded', function() {
         kaleidoscopeCanvas.addEventListener('touchcancel', endDrag);
     }
 
+    function isMobilePortrait() {
+        // Check if the device is mobile using a simple user agent check
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // Check if the device is in portrait orientation
+        const isPortrait = window.innerHeight > window.innerWidth;
+        return isMobile && isPortrait;
+    }
+
     function setupThumbnail() {
         console.log('Setup thumbnail');
+
+        if (isMobilePortrait()) {
+            thumbnailSize = 500;
+        } else {
+            thumbnailSize = 200;
+        }
+
         const scaleToFitX = thumbnailSize / offscreenSrcImgCanvas.width;
         const scaleToFitY = thumbnailSize / offscreenSrcImgCanvas.height;
 
         console.log('Thumbnail scaling factor', Math.min(scaleToFitX, scaleToFitY));
+        console.log('Is mobile in portrait mode:', isMobilePortrait());
 
         if (scaleToFitX < scaleToFitY) {
             // fit to width
@@ -127,6 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const y = sampleY;
 
         const ctx = kaleidoscopeCanvas.getContext('2d');
+        // Clear any transformations applied to the context
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
@@ -237,19 +262,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (isTiling) {
 
+            const downScaleFactor = isMobilePortrait() ? 1 : 0.5;
+
             const gridXStep = isCircular ? 
-                                offscreenTileCanvas.width : 
-                                3 * offscreenTileCanvas.width / 2;
+                                downScaleFactor * offscreenTileCanvas.width : 
+                                3 * downScaleFactor * offscreenTileCanvas.width / 2;
 
             const gridYStep = isCircular ?
-                                Math.sqrt(3) * clippingTileWidth :
-                                (Math.sqrt(3) / 2) * clippingTileWidth;
+                                Math.sqrt(3) * downScaleFactor * clippingTileWidth :
+                                (Math.sqrt(3) / 2) * downScaleFactor * clippingTileWidth;
 
-            const nrows = isCircular ? 4 : 8;
+            const nrows = Math.ceil(kaleidoscopeCanvas.height / gridYStep) + 1;
+            const ncols = Math.ceil(kaleidoscopeCanvas.width / gridXStep) + 1;
 
             ctx.save();
-            ctx.scale(.4, .4);
-            ctx.translate(-offscreenTileCanvas.width / 2, -offscreenTileCanvas.height / 2);
+            ctx.translate(-downScaleFactor * offscreenTileCanvas.width / 2, 
+                          -downScaleFactor * offscreenTileCanvas.height / 2);
 
             for (let j = 0; j < nrows; j++) {
                 ctx.save();
@@ -258,9 +286,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (j % 2 != 0) {
                     ctx.translate(gridXStep / 2, 0);
                 }
-                for (let i = 0; i < 7; i ++) {
+                for (let i = 0; i < ncols; i ++) {
                     ctx.save();
                     ctx.translate(i * gridXStep, 0);
+                    ctx.scale(downScaleFactor, downScaleFactor);
                     ctx.drawImage(offscreenTileCanvas, 0, 0);
                     ctx.restore();
                 }
@@ -309,7 +338,6 @@ document.addEventListener('DOMContentLoaded', function() {
                    y + (Math.sqrt(3) * clippingTileWidth / 2));
         ctx.closePath();
     }
-    
 
     function drawClipping() {
         const ctx = offscreenSrcImgCanvas.getContext('2d');
@@ -332,8 +360,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Restore the canvas state
         ctx.restore();
     }
-
-    let isDragging = false;
 
     function startDrag(event) {
         isDragging = true;
@@ -367,8 +393,6 @@ document.addEventListener('DOMContentLoaded', function() {
         draw();
     }
 
-    let isTiling = false;
-
     // Add event listener for 't' key press
     document.addEventListener('keydown', function(event) {
         if (event.key === 't' || event.key === 'T') {
@@ -376,8 +400,6 @@ document.addEventListener('DOMContentLoaded', function() {
             draw();
         }
     });
-
-    let isGrayscale = false;
 
     // Modify the event listener for 'g' key press
     document.addEventListener('keydown', function(event) {
@@ -387,8 +409,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // No need to redraw the kaleidoscope
     }
     });
-
-    let isCircular = false;
 
     // Add event listener for 'm' key press to switch between circular and hexagonal models
     document.addEventListener('keydown', function(event) {
