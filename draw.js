@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get the canvas element
     const kaleidoscopeCanvas = document.getElementById('kaleidoscope_canvas');
 
+    // in offscreen canvas coordinates
     let sampleX = 0;
     let sampleY = 0;
 
@@ -28,13 +29,22 @@ document.addEventListener('DOMContentLoaded', function() {
     let isGrayscale = false;
     let isTiling = true;
     let isDragging = false;
+    let isAminationMode = true;
+
+    let lastDrawTime = 0;
+    const drawInterval = 75; // 75 milliseconds
 
     // Check if the browser supports canvas
     if (kaleidoscopeCanvas.getContext) {
-        setupKaleidoscope();
-        loadImage();
+        init();
     } else {
         console.log('Canvas is not supported in this browser.');
+    }
+
+    function init() {
+        resizeCanvas();
+        setupKaleidoscope();
+        loadImage();
     }
 
     // Add this function to resize the canvas
@@ -54,10 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
             drawThumbnail();
         }
     }
-    
-    // Call resizeCanvas initially and on window resize
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
 
     function setupKaleidoscope() {
         console.log('Setup kaleidoscope canvas');
@@ -133,6 +139,8 @@ document.addEventListener('DOMContentLoaded', function() {
           offscreenCtx.clearRect(0, 0, offscreenSrcImgCanvas.width, offscreenSrcImgCanvas.height);
 
           console.log('Image loaded');
+          sampleX = offscreenSrcImgCanvas.width / 2;
+          sampleY = offscreenSrcImgCanvas.height / 2;
           setupThumbnail();
           draw();
         });
@@ -141,9 +149,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function draw() {
-        drawClipping();
-        drawKaleidoscope();
-        drawThumbnail();
+        const currentTime = performance.now();
+        if (isAminationMode) {
+            if (currentTime - lastDrawTime >= drawInterval) {
+                const startTime = performance.now();
+                drawClipping();
+                drawKaleidoscope();
+                drawThumbnail();
+
+                sampleX = (sampleX + 1) % (offscreenSrcImgCanvas.width - clippingTileWidth);
+                
+                lastDrawTime = currentTime;
+                
+                const endTime = performance.now();
+                console.log(`Frame time: ${endTime - startTime} ms`);
+            }
+            window.requestAnimationFrame(draw);
+        } else {
+            const startTime = performance.now();
+            drawClipping();
+            drawKaleidoscope();
+            drawThumbnail();
+
+            const endTime = performance.now();
+            console.log(`Draw time: ${endTime - startTime} ms`);
+        }
     }
 
     function drawThumbnail() {
@@ -228,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function drawTileOffscreen(x, y) {
+    function drawTileOffscreen() {
         offscreenTileCanvas.width = 2 * clippingTileWidth;
         offscreenTileCanvas.height = 2 * clippingTileWidth;
 
@@ -363,13 +393,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function startDrag(event) {
         isDragging = true;
+        if (!isAminationMode) {
         updatePosition(event);
+        }
+        event.preventDefault();
     }
     
     function drag(event) {
-        if (isDragging) {
+        if (isDragging && !isAminationMode) {
             updatePosition(event);
         }
+        event.preventDefault();
     }
     
     function endDrag() {
@@ -391,7 +425,11 @@ document.addEventListener('DOMContentLoaded', function() {
         sampleX = (clientX - rect.left) * convertKaleidoscopeToOffscreenXCoords;
         sampleY = (clientY - rect.top) * convertKaleidoscopeToOffscreenYCoords;
         draw();
+        event.preventDefault();
     }
+
+    // Call resizeCanvas on window resize
+    window.addEventListener('resize', resizeCanvas);
 
     // Add event listener for 't' key press
     document.addEventListener('keydown', function(event) {
@@ -403,11 +441,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Modify the event listener for 'g' key press
     document.addEventListener('keydown', function(event) {
-    if (event.key === 'g' || event.key === 'G') {
-        isGrayscale = !isGrayscale;
-        kaleidoscopeCanvas.classList.toggle('grayscale');
-        // No need to redraw the kaleidoscope
-    }
+        if (event.key === 'g' || event.key === 'G') {
+            isGrayscale = !isGrayscale;
+            kaleidoscopeCanvas.classList.toggle('grayscale');
+            // No need to redraw the kaleidoscope
+        }
     });
 
     // Add event listener for 'm' key press to switch between circular and hexagonal models
@@ -420,5 +458,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+        // Add event listener for 'a' to toggle between animation and static mode
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'a' || event.key === 'A') {
+                isAminationMode = !isAminationMode;
+                console.log(`Switched to ${isAminationMode ? 'animation' : 'static'} mode`);
+                // Redraw the kaleidoscope with the updated model
+                draw();
+            }
+        });
 
 });
