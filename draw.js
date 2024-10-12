@@ -30,9 +30,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let isTiling = true;
     let isDragging = false;
     let isAminationMode = true;
+    let isLinearAnimation = false;
+    let lemniscateParam = 0;
+    const radialStep = Math.PI / 720;
 
     let lastDrawTime = 0;
-    const drawInterval = 75; // 75 milliseconds
+    const drawInterval = 50; // 50 milliseconds
 
     // Check if the browser supports canvas
     if (kaleidoscopeCanvas.getContext) {
@@ -148,6 +151,30 @@ document.addEventListener('DOMContentLoaded', function() {
         sourceImage.src = "trees.jpeg";
     }
 
+    function lemniscate(t, a) {
+        const cosT = Math.cos(t);
+        const sinT = Math.sin(t);
+        const denominator = 1 + sinT * sinT;
+        
+        const x = (a * cosT) / denominator;
+        const y = (a * sinT * cosT) / denominator;
+        
+        return { x, y };
+    }
+
+    function getSinusoidalSample() {
+        const currentTime = performance.now();
+        const frequency = 0.001; // Adjust this value to change the speed of oscillation
+        const amplitude = 0.4; // (1 - 0.2) / 2
+        const midpoint = 0.6; // (1 + 0.2) / 2
+        
+        // Calculate the sinusoidal value between -1 and 1
+        const sinValue = Math.sin(currentTime * frequency);
+        
+        // Map the sinusoidal value to the range [0.2, 1]
+        return midpoint + amplitude * sinValue;
+    }
+    
     function draw() {
         const currentTime = performance.now();
         if (isAminationMode) {
@@ -157,7 +184,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 drawKaleidoscope();
                 drawThumbnail();
 
-                sampleX = (sampleX + 1) % (offscreenSrcImgCanvas.width - clippingTileWidth);
+                if (isLinearAnimation) {
+                    sampleX = (sampleX + 1) % (offscreenSrcImgCanvas.width - clippingTileWidth);
+                } else {
+                    lemniscateParam += radialStep * getSinusoidalSample();
+                    const { x, y } = lemniscate(lemniscateParam, offscreenSrcImgCanvas.width / 2 - clippingTileWidth);
+                    sampleX = offscreenSrcImgCanvas.width / 2 + x;
+                    sampleY = offscreenSrcImgCanvas.height / 2 + y;
+                }
                 
                 lastDrawTime = currentTime;
                 
