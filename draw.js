@@ -189,8 +189,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (isLinearAnimation) {
                     currentRadians += radialStep;
-                    sampleX = offscreenSrcImgCanvas.width / 2 + Math.cos(currentRadians) * getSinusoidalSample() * 300;
-                    sampleY = offscreenSrcImgCanvas.height / 2 + Math.sin(currentRadians) * getSinusoidalSample() * 300;
+                    sampleX = offscreenSrcImgCanvas.width / 2 + Math.cos(currentRadians) * getSinusoidalSample() * 150;
+                    sampleY = offscreenSrcImgCanvas.height / 2 + Math.sin(currentRadians) * getSinusoidalSample() * 150;
                 } else {
                     lemniscateParam += radialStep * getSinusoidalSample();
                     const { x, y } = lemniscate(lemniscateParam, offscreenSrcImgCanvas.width / 2 - clippingTileWidth);
