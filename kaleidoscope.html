@@ -107,6 +107,12 @@
       // Redraw the kaleidoscope here if necessary
       resizeCanvas();
     }
+
+    // Add touch event listener for mobile devices
+      document.getElementById('fullscreen-btn').addEventListener('touchend', function(e) {
+      e.preventDefault(); // Prevent default touch behavior
+      this.click(); // Trigger the click event
+    });
   </script>
 </body>
 
