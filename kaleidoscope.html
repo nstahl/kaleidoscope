@@ -62,17 +62,51 @@
   <script src="draw.js"></script>
   <script>
     document.getElementById('fullscreen-btn').addEventListener('click', function() {
-      var canvas = document.getElementById('kaleidoscope_canvas');
-      if (canvas.requestFullscreen) {
-        canvas.requestFullscreen();
-      } else if (canvas.mozRequestFullScreen) { // Firefox
-        canvas.mozRequestFullScreen();
-      } else if (canvas.webkitRequestFullscreen) { // Chrome, Safari and Opera
-        canvas.webkitRequestFullscreen();
-      } else if (canvas.msRequestFullscreen) { // IE/Edge
-        canvas.msRequestFullscreen();
+      var elem = document.documentElement;
+      
+      if (!document.fullscreenElement && !document.mozFullScreenElement &&
+          !document.webkitFullscreenElement && !document.msFullscreenElement) {
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen();
+        } else if (elem.mozRequestFullScreen) { // Firefox
+          elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) { // Chrome, Safari and Opera
+          elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { // IE/Edge
+          elem.msRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
       }
     });
+
+    // Adjust canvas size on fullscreen change
+    document.addEventListener('fullscreenchange', adjustCanvasSize);
+    document.addEventListener('webkitfullscreenchange', adjustCanvasSize);
+    document.addEventListener('mozfullscreenchange', adjustCanvasSize);
+    document.addEventListener('MSFullscreenChange', adjustCanvasSize);
+
+    function adjustCanvasSize() {
+      var canvas = document.getElementById('kaleidoscope_canvas');
+      if (document.fullscreenElement || document.webkitFullscreenElement ||
+          document.mozFullScreenElement || document.msFullscreenElement) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      } else {
+        canvas.width = 1400;
+        canvas.height = 700;
+      }
+      // Redraw the kaleidoscope here if necessary
+      resizeCanvas();
+    }
   </script>
 </body>
 

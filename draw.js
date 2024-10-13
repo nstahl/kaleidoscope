@@ -511,4 +511,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    //  expose functions to the global scope
+    window.resizeCanvas = resizeCanvas;
+
 });
