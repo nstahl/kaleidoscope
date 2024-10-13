@@ -25,14 +25,16 @@ document.addEventListener('DOMContentLoaded', function() {
     let thumbnailWidth;
     let thumbnailHeight;
 
+    let showThumbnail = true;
     let isCircular = false;
     let isGrayscale = false;
     let isTiling = true;
     let isDragging = false;
     let isAminationMode = true;
-    let isLinearAnimation = false;
+    let isLinearAnimation = true;
     let lemniscateParam = 0;
     const radialStep = Math.PI / 720;
+    let currentRadians = 0;
 
     let lastDrawTime = 0;
     const drawInterval = 50; // 50 milliseconds
@@ -179,13 +181,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentTime = performance.now();
         if (isAminationMode) {
             if (currentTime - lastDrawTime >= drawInterval) {
-                const startTime = performance.now();
                 drawClipping();
                 drawKaleidoscope();
-                drawThumbnail();
+                if (showThumbnail) {
+                    drawThumbnail();
+                }
 
                 if (isLinearAnimation) {
-                    sampleX = (sampleX + 1) % (offscreenSrcImgCanvas.width - clippingTileWidth);
+                    currentRadians += radialStep;
+                    sampleX = offscreenSrcImgCanvas.width / 2 + Math.cos(currentRadians) * getSinusoidalSample() * 300;
+                    sampleY = offscreenSrcImgCanvas.height / 2 + Math.sin(currentRadians) * getSinusoidalSample() * 300;
                 } else {
                     lemniscateParam += radialStep * getSinusoidalSample();
                     const { x, y } = lemniscate(lemniscateParam, offscreenSrcImgCanvas.width / 2 - clippingTileWidth);
@@ -194,19 +199,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 lastDrawTime = currentTime;
-                
-                const endTime = performance.now();
-                console.log(`Frame time: ${endTime - startTime} ms`);
             }
             window.requestAnimationFrame(draw);
         } else {
-            const startTime = performance.now();
             drawClipping();
             drawKaleidoscope();
-            drawThumbnail();
-
-            const endTime = performance.now();
-            console.log(`Draw time: ${endTime - startTime} ms`);
+            if (showThumbnail) {
+                drawThumbnail();
+            }
         }
     }
 
@@ -467,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add event listener for 't' key press
     document.addEventListener('keydown', function(event) {
-        if (event.key === 't' || event.key === 'T') {
+        if (event.key === 'a' || event.key === 'A') {
             isTiling = !isTiling;
             draw();
         }
@@ -494,12 +494,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Add event listener for 'a' to toggle between animation and static mode
         document.addEventListener('keydown', function(event) {
-            if (event.key === 'a' || event.key === 'A') {
+            if (event.key === 'p' || event.key === 'P') {
                 isAminationMode = !isAminationMode;
                 console.log(`Switched to ${isAminationMode ? 'animation' : 'static'} mode`);
                 // Redraw the kaleidoscope with the updated model
                 draw();
             }
         });
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 't' || event.key === 'T') {
+            showThumbnail = !showThumbnail;
+            console.log(`Switched to ${showThumbnail ? 'show' : 'hide'} thumbnail`);
+            // Redraw the kaleidoscope with the updated model
+            draw();
+        }
+    });
 
 });
