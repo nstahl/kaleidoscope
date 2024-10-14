@@ -77,6 +77,10 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
+        if (isGrayscale) {
+            kaleidoscopeCanvas.classList.toggle('grayscale');
+        }
+
         // Add touch and mouse event listeners
         kaleidoscopeCanvas.addEventListener('mousedown', startDrag);
         kaleidoscopeCanvas.addEventListener('mousemove', drag);
