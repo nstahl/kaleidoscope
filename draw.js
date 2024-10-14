@@ -25,10 +25,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let thumbnailWidth;
     let thumbnailHeight;
 
-    let showThumbnail = true;
-    let isCircular = false;
-    let isGrayscale = false;
-    let isTiling = true;
+    let showThumbnail = false;
+    let isCircular = true;
+    let isGrayscale = true;
+    let isTiling = false;
     let isDragging = false;
     let isAminationMode = true;
     let isLinearAnimation = true;
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
         convertKaleidoscopeToOffscreenXCoords = offscreenSrcImgCanvas.width / kaleidoscopeCanvas.width;
         convertKaleidoscopeToOffscreenYCoords = offscreenSrcImgCanvas.height / kaleidoscopeCanvas.height;
         // Redraw the kaleidoscope
-        if (sourceImage.complete) {
+        if (sourceImage.complete && !isAminationMode) {
             setupThumbnail();
             drawClipping();
             drawKaleidoscope();
