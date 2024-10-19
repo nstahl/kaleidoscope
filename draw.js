@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
           draw();
         });
         
-        sourceImage.src = "ny-bay-evening.jpg";
+        sourceImage.src = "ny-bay.jpg";
     }
 
     function getSigmoidalSample(x) {
@@ -272,20 +272,55 @@ document.addEventListener('DOMContentLoaded', function() {
     function drawCircularTile(ctx) {
         const x = sampleX;
         const y = sampleY;
+
+        // Create a temporary canvas for the blurred image
+        const tempCanvas = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
+        const tempCtx = tempCanvas.getContext('2d');
+
+        const centerX = Math.floor(tempCanvas.width / 2);
+        const centerY = Math.floor(tempCanvas.height / 2);
+
+        tempCtx.save();
+        tempCtx.translate(centerX, centerY);
         // draw 16 clipping tiles in radial pattern
         for (let i = 0; i < 8; i++) {
-            ctx.save();
-            ctx.rotate(i * Math.PI / 4);
-            ctx.save();
-            ctx.rotate(-radialExtension / 2);
-            drawClippingTile(ctx, x, y);
-            ctx.restore();
-            ctx.save();
-            ctx.scale(1, -1);
-            drawClippingTile(ctx, x, y);
-            ctx.restore();
-            ctx.restore();
+            tempCtx.save();
+            tempCtx.rotate(i * Math.PI / 4);
+            tempCtx.save();
+            tempCtx.rotate(-radialExtension / 2);
+            drawClippingTile(tempCtx, x, y);
+            tempCtx.restore();
+            tempCtx.save();
+            tempCtx.scale(1, -1);
+            drawClippingTile(tempCtx, x, y);
+            tempCtx.restore();
+            tempCtx.restore();
         }
+        tempCtx.restore();
+
+        // Apply radial blur
+        const blurRadius = 3; // Adjust this value to control the blur intensity
+        const gradient = ctx.createRadialGradient(
+            centerX, centerY, 0,
+            centerX, centerY, clippingTileWidth / 4
+        );
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+        gradient.addColorStop(0.5, 'rgba(0, 0, 0, 1)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.translate(-centerX, -centerY);
+
+        ctx.save();
+        ctx.filter = `blur(${blurRadius}px)`;
+        ctx.drawImage(tempCanvas, 0, 0);
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, clippingTileWidth * 2, clippingTileWidth * 2);
+        ctx.restore();
+        
+        // Draw the original sharp image on top
+        ctx.drawImage(tempCanvas, 0, 0);
+
     }
 
     function drawTileOffscreen() {
