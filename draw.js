@@ -40,6 +40,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let lastDrawTime = 0;
     const drawInterval = 50; // 50 milliseconds
 
+    const radialExtension = Math.PI / 100;
+
     // Check if the browser supports canvas
     if (kaleidoscopeCanvas.getContext) {
         init();
@@ -155,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
           draw();
         });
         
-        sourceImage.src = "trees.jpeg";
+        sourceImage.src = "ny-bay-evening.jpg";
     }
 
     function getSigmoidalSample(x) {
@@ -273,8 +275,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // draw 16 clipping tiles in radial pattern
         for (let i = 0; i < 8; i++) {
             ctx.save();
-            ctx.rotate(i* Math.PI / 4);
+            ctx.rotate(i * Math.PI / 4);
+            ctx.save();
+            ctx.rotate(-radialExtension / 2);
             drawClippingTile(ctx, x, y);
+            ctx.restore();
             ctx.save();
             ctx.scale(1, -1);
             drawClippingTile(ctx, x, y);
@@ -375,7 +380,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const x = sampleX;
         const y = sampleY;
         // Create a clipping path
-        const radialExtension = Math.PI / 500;
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(-radialExtension / 2);
@@ -384,6 +388,9 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.arc(0, 0, clippingTileWidth, 0, Math.PI / 8 + radialExtension);
         ctx.lineTo(0, 0);
         ctx.restore();
+
+        // Apply transparency to the image
+        // ctx.globalAlpha = 0.7; // Adjust this value between 0 and 1 to control transparency
     }
 
     function drawHexagonalClippingPath(ctx) {
