@@ -31,10 +31,11 @@ document.addEventListener('DOMContentLoaded', function() {
     let isTiling = false;
     let isDragging = false;
     let isAminationMode = true;
-    let isLinearAnimation = true;
-    let lemniscateParam = 0;
     const radialStep = Math.PI / 720;
     let currentRadians = 0;
+
+    let sigmoidSteepness = 0.3;
+    let oscillationFrequency = 0.00125;
 
     let lastDrawTime = 0;
     const drawInterval = 50; // 50 milliseconds
@@ -157,28 +158,19 @@ document.addEventListener('DOMContentLoaded', function() {
         sourceImage.src = "trees.jpeg";
     }
 
-    function lemniscate(t, a) {
-        const cosT = Math.cos(t);
-        const sinT = Math.sin(t);
-        const denominator = 1 + sinT * sinT;
-        
-        const x = (a * cosT) / denominator;
-        const y = (a * sinT * cosT) / denominator;
-        
-        return { x, y };
+    function getSigmoidalSample(x) {
+        // Calculate the sigmoid value between 0 and 1
+        const sigmoidValue = 1 / (1 + Math.exp(-sigmoidSteepness * x));
+
+        return sigmoidValue;
     }
 
     function getSinusoidalSample() {
-        const currentTime = performance.now();
-        const frequency = 0.001; // Adjust this value to change the speed of oscillation
-        const amplitude = 0.4; // (1 - 0.2) / 2
-        const midpoint = 0.6; // (1 + 0.2) / 2
+        const currentTime = performance.now() / 2;
         
         // Calculate the sinusoidal value between -1 and 1
-        const sinValue = Math.sin(currentTime * frequency);
-        
-        // Map the sinusoidal value to the range [0.2, 1]
-        return midpoint + amplitude * sinValue;
+        const sinusoidalValue = Math.sin(currentTime * oscillationFrequency);
+        return sinusoidalValue;
     }
     
     function draw() {
@@ -191,17 +183,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     drawThumbnail();
                 }
 
-                if (isLinearAnimation) {
-                    currentRadians += radialStep;
-                    sampleX = offscreenSrcImgCanvas.width / 2 + Math.cos(currentRadians) * getSinusoidalSample() * 150;
-                    sampleY = offscreenSrcImgCanvas.height / 2 + Math.sin(currentRadians) * getSinusoidalSample() * 150;
-                } else {
-                    lemniscateParam += radialStep * getSinusoidalSample();
-                    const { x, y } = lemniscate(lemniscateParam, offscreenSrcImgCanvas.width / 2 - clippingTileWidth);
-                    sampleX = offscreenSrcImgCanvas.width / 2 + x;
-                    sampleY = offscreenSrcImgCanvas.height / 2 + y;
-                }
-                
+                currentRadians += radialStep;
+                const xSample = 10*getSinusoidalSample();
+                const firstDerivativeOfSigmoid = getSigmoidalSample(xSample) * (1 - getSigmoidalSample(xSample));
+                const vectorLength = getSigmoidalSample(xSample) * 250;
+                sampleX = offscreenSrcImgCanvas.width / 2 + Math.cos(currentRadians) * vectorLength;
+                sampleY = offscreenSrcImgCanvas.height / 2 + Math.sin(currentRadians) * vectorLength;
                 lastDrawTime = currentTime;
             }
             window.requestAnimationFrame(draw);
@@ -512,6 +499,48 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`Switched to ${showThumbnail ? 'show' : 'hide'} thumbnail`);
             // Redraw the kaleidoscope with the updated model
             draw();
+        }
+    });
+
+    // Add event listener for up and down arrow keys to adjust sigmoidSteepness
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'ArrowUp') {
+            sigmoidSteepness += 0.005;
+            console.log(`Increased sigmoidSteepness to ${sigmoidSteepness.toFixed(3)}`);
+            if (isAminationMode) {
+                // If in animation mode, the change will be reflected in the next frame
+            } else {
+                // If in static mode, redraw immediately
+                draw();
+            }
+        } else if (event.key === 'ArrowDown') {
+            sigmoidSteepness = Math.max(0, sigmoidSteepness - 0.005); // Prevent negative values
+            console.log(`Decreased sigmoidSteepness to ${sigmoidSteepness.toFixed(3)}`);
+            if (isAminationMode) {
+                // If in animation mode, the change will be reflected in the next frame
+            } else {
+                // If in static mode, redraw immediately
+                draw();
+            }
+        }
+    });
+
+    // Add event listener for left and right arrow keys to adjust oscillationFrequency
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'ArrowLeft') {
+            oscillationFrequency = Math.max(0, oscillationFrequency - 0.00005); // Prevent negative values
+            console.log(`Decreased oscillationFrequency to ${oscillationFrequency.toFixed(5)}`);
+            if (!isAminationMode) {
+                // If in static mode, redraw immediately
+                draw();
+            }
+        } else if (event.key === 'ArrowRight') {
+            oscillationFrequency += 0.00005;
+            console.log(`Increased oscillationFrequency to ${oscillationFrequency.toFixed(5)}`);
+            if (!isAminationMode) {
+                // If in static mode, redraw immediately
+                draw();
+            }
         }
     });
 
