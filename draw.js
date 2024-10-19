@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get the canvas element
     const kaleidoscopeCanvas = document.getElementById('kaleidoscope_canvas');
 
+    // in offscreen canvas coordinates
     let sampleX = 0;
     let sampleY = 0;
 
@@ -24,17 +25,32 @@ document.addEventListener('DOMContentLoaded', function() {
     let thumbnailWidth;
     let thumbnailHeight;
 
-    let isCircular = false;
-    let isGrayscale = false;
-    let isTiling = true;
+    let showThumbnail = false;
+    let isCircular = true;
+    let isGrayscale = true;
+    let isTiling = false;
     let isDragging = false;
+    let isAminationMode = true;
+    const radialStep = Math.PI / 720;
+    let currentRadians = 0;
+
+    let sigmoidSteepness = 0.275;
+    let oscillationFrequency = 0.00125;
+
+    let lastDrawTime = 0;
+    const drawInterval = 50; // 50 milliseconds
 
     // Check if the browser supports canvas
     if (kaleidoscopeCanvas.getContext) {
-        setupKaleidoscope();
-        loadImage();
+        init();
     } else {
         console.log('Canvas is not supported in this browser.');
+    }
+
+    function init() {
+        resizeCanvas();
+        setupKaleidoscope();
+        loadImage();
     }
 
     // Add this function to resize the canvas
@@ -47,17 +63,13 @@ document.addEventListener('DOMContentLoaded', function() {
         convertKaleidoscopeToOffscreenXCoords = offscreenSrcImgCanvas.width / kaleidoscopeCanvas.width;
         convertKaleidoscopeToOffscreenYCoords = offscreenSrcImgCanvas.height / kaleidoscopeCanvas.height;
         // Redraw the kaleidoscope
-        if (sourceImage.complete) {
+        if (sourceImage.complete && !isAminationMode) {
             setupThumbnail();
             drawClipping();
             drawKaleidoscope();
             drawThumbnail();
         }
     }
-    
-    // Call resizeCanvas initially and on window resize
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
 
     function setupKaleidoscope() {
         console.log('Setup kaleidoscope canvas');
@@ -65,6 +77,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add these lines to enable image smoothing
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
+
+        if (isGrayscale) {
+            kaleidoscopeCanvas.classList.toggle('grayscale');
+        }
 
         // Add touch and mouse event listeners
         kaleidoscopeCanvas.addEventListener('mousedown', startDrag);
@@ -133,6 +149,8 @@ document.addEventListener('DOMContentLoaded', function() {
           offscreenCtx.clearRect(0, 0, offscreenSrcImgCanvas.width, offscreenSrcImgCanvas.height);
 
           console.log('Image loaded');
+          sampleX = offscreenSrcImgCanvas.width / 2;
+          sampleY = offscreenSrcImgCanvas.height / 2;
           setupThumbnail();
           draw();
         });
@@ -140,10 +158,47 @@ document.addEventListener('DOMContentLoaded', function() {
         sourceImage.src = "trees.jpeg";
     }
 
+    function getSigmoidalSample(x) {
+        // Calculate the sigmoid value between 0 and 1
+        const sigmoidValue = 1 / (1 + Math.exp(-sigmoidSteepness * x));
+
+        return sigmoidValue;
+    }
+
+    function getSinusoidalSample() {
+        const currentTime = performance.now() / 2;
+        
+        // Calculate the sinusoidal value between -1 and 1
+        const sinusoidalValue = Math.sin(currentTime * oscillationFrequency);
+        return sinusoidalValue;
+    }
+    
     function draw() {
-        drawClipping();
-        drawKaleidoscope();
-        drawThumbnail();
+        const currentTime = performance.now();
+        if (isAminationMode) {
+            if (currentTime - lastDrawTime >= drawInterval) {
+                drawClipping();
+                drawKaleidoscope();
+                if (showThumbnail) {
+                    drawThumbnail();
+                }
+
+                currentRadians += radialStep;
+                const xSample = 10*getSinusoidalSample();
+                const firstDerivativeOfSigmoid = getSigmoidalSample(xSample) * (1 - getSigmoidalSample(xSample));
+                const vectorLength = getSigmoidalSample(xSample) * 250;
+                sampleX = offscreenSrcImgCanvas.width / 2 + Math.cos(currentRadians) * vectorLength;
+                sampleY = offscreenSrcImgCanvas.height / 2 + Math.sin(currentRadians) * vectorLength;
+                lastDrawTime = currentTime;
+            }
+            window.requestAnimationFrame(draw);
+        } else {
+            drawClipping();
+            drawKaleidoscope();
+            if (showThumbnail) {
+                drawThumbnail();
+            }
+        }
     }
 
     function drawThumbnail() {
@@ -228,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function drawTileOffscreen(x, y) {
+    function drawTileOffscreen() {
         offscreenTileCanvas.width = 2 * clippingTileWidth;
         offscreenTileCanvas.height = 2 * clippingTileWidth;
 
@@ -320,11 +375,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const x = sampleX;
         const y = sampleY;
         // Create a clipping path
+        const radialExtension = Math.PI / 500;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-radialExtension / 2);
         ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + clippingTileWidth, y);
-        ctx.arc(x, y, clippingTileWidth, 0, Math.PI / 8);
-        ctx.closePath();
+        ctx.lineTo(clippingTileWidth, 0);
+        ctx.arc(0, 0, clippingTileWidth, 0, Math.PI / 8 + radialExtension);
+        ctx.lineTo(0, 0);
+        ctx.restore();
     }
 
     function drawHexagonalClippingPath(ctx) {
@@ -363,13 +422,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function startDrag(event) {
         isDragging = true;
+        if (!isAminationMode) {
         updatePosition(event);
+        }
+        event.preventDefault();
     }
     
     function drag(event) {
-        if (isDragging) {
+        if (isDragging && !isAminationMode) {
             updatePosition(event);
         }
+        event.preventDefault();
     }
     
     function endDrag() {
@@ -391,11 +454,15 @@ document.addEventListener('DOMContentLoaded', function() {
         sampleX = (clientX - rect.left) * convertKaleidoscopeToOffscreenXCoords;
         sampleY = (clientY - rect.top) * convertKaleidoscopeToOffscreenYCoords;
         draw();
+        event.preventDefault();
     }
+
+    // Call resizeCanvas on window resize
+    window.addEventListener('resize', resizeCanvas);
 
     // Add event listener for 't' key press
     document.addEventListener('keydown', function(event) {
-        if (event.key === 't' || event.key === 'T') {
+        if (event.key === 'a' || event.key === 'A') {
             isTiling = !isTiling;
             draw();
         }
@@ -403,11 +470,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Modify the event listener for 'g' key press
     document.addEventListener('keydown', function(event) {
-    if (event.key === 'g' || event.key === 'G') {
-        isGrayscale = !isGrayscale;
-        kaleidoscopeCanvas.classList.toggle('grayscale');
-        // No need to redraw the kaleidoscope
-    }
+        if (event.key === 'g' || event.key === 'G') {
+            isGrayscale = !isGrayscale;
+            kaleidoscopeCanvas.classList.toggle('grayscale');
+            // No need to redraw the kaleidoscope
+        }
     });
 
     // Add event listener for 'm' key press to switch between circular and hexagonal models
@@ -420,5 +487,65 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+        // Add event listener for 'a' to toggle between animation and static mode
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'p' || event.key === 'P') {
+                isAminationMode = !isAminationMode;
+                console.log(`Switched to ${isAminationMode ? 'animation' : 'static'} mode`);
+                // Redraw the kaleidoscope with the updated model
+                draw();
+            }
+        });
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 't' || event.key === 'T') {
+            showThumbnail = !showThumbnail;
+            console.log(`Switched to ${showThumbnail ? 'show' : 'hide'} thumbnail`);
+            // Redraw the kaleidoscope with the updated model
+            draw();
+        }
+    });
+
+    // Add event listener for up and down arrow keys to adjust sigmoidSteepness
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'ArrowUp') {
+            sigmoidSteepness += 0.005;
+            console.log(`Increased sigmoidSteepness to ${sigmoidSteepness.toFixed(3)}`);
+            if (isAminationMode) {
+                // If in animation mode, the change will be reflected in the next frame
+            } else {
+                // If in static mode, redraw immediately
+                draw();
+            }
+        } else if (event.key === 'ArrowDown') {
+            sigmoidSteepness = Math.max(0, sigmoidSteepness - 0.005); // Prevent negative values
+            console.log(`Decreased sigmoidSteepness to ${sigmoidSteepness.toFixed(3)}`);
+            if (isAminationMode) {
+                // If in animation mode, the change will be reflected in the next frame
+            } else {
+                // If in static mode, redraw immediately
+                draw();
+            }
+        }
+    });
+
+    // Add event listener for left and right arrow keys to adjust oscillationFrequency
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'ArrowLeft') {
+            oscillationFrequency = Math.max(0, oscillationFrequency - 0.00005); // Prevent negative values
+            console.log(`Decreased oscillationFrequency to ${oscillationFrequency.toFixed(5)}`);
+            if (!isAminationMode) {
+                // If in static mode, redraw immediately
+                draw();
+            }
+        } else if (event.key === 'ArrowRight') {
+            oscillationFrequency += 0.00005;
+            console.log(`Increased oscillationFrequency to ${oscillationFrequency.toFixed(5)}`);
+            if (!isAminationMode) {
+                // If in static mode, redraw immediately
+                draw();
+            }
+        }
+    });
 
 });
