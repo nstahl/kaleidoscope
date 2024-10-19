@@ -375,11 +375,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const x = sampleX;
         const y = sampleY;
         // Create a clipping path
+        const radialExtension = Math.PI / 500;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-radialExtension / 2);
         ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + clippingTileWidth, y);
-        ctx.arc(x, y, clippingTileWidth, 0, Math.PI / 8);
-        ctx.closePath();
+        ctx.lineTo(clippingTileWidth, 0);
+        ctx.arc(0, 0, clippingTileWidth, 0, Math.PI / 8 + radialExtension);
+        ctx.lineTo(0, 0);
+        ctx.restore();
     }
 
     function drawHexagonalClippingPath(ctx) {
