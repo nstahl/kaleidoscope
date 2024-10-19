@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const radialStep = Math.PI / 720;
     let currentRadians = 0;
 
-    let sigmoidSteepness = 0.3;
+    let sigmoidSteepness = 0.275;
     let oscillationFrequency = 0.00125;
 
     let lastDrawTime = 0;
