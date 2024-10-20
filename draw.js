@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
           draw();
         });
         
-        sourceImage.src = "ny-bay.jpg";
+        sourceImage.src = "trees.jpeg";
     }
 
     function getSigmoidalSample(x) {
