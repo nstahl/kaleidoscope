@@ -40,6 +40,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let lastDrawTime = 0;
     const drawInterval = 50; // 50 milliseconds
 
+    const radialExtension = Math.PI / 100;
+
     // Check if the browser supports canvas
     if (kaleidoscopeCanvas.getContext) {
         init();
@@ -270,17 +272,55 @@ document.addEventListener('DOMContentLoaded', function() {
     function drawCircularTile(ctx) {
         const x = sampleX;
         const y = sampleY;
+
+        // Create a temporary canvas for the blurred image
+        const tempCanvas = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
+        const tempCtx = tempCanvas.getContext('2d');
+
+        const centerX = Math.floor(tempCanvas.width / 2);
+        const centerY = Math.floor(tempCanvas.height / 2);
+
+        tempCtx.save();
+        tempCtx.translate(centerX, centerY);
         // draw 16 clipping tiles in radial pattern
         for (let i = 0; i < 8; i++) {
-            ctx.save();
-            ctx.rotate(i* Math.PI / 4);
-            drawClippingTile(ctx, x, y);
-            ctx.save();
-            ctx.scale(1, -1);
-            drawClippingTile(ctx, x, y);
-            ctx.restore();
-            ctx.restore();
+            tempCtx.save();
+            tempCtx.rotate(i * Math.PI / 4);
+            tempCtx.save();
+            tempCtx.rotate(-radialExtension / 2);
+            drawClippingTile(tempCtx, x, y);
+            tempCtx.restore();
+            tempCtx.save();
+            tempCtx.scale(1, -1);
+            drawClippingTile(tempCtx, x, y);
+            tempCtx.restore();
+            tempCtx.restore();
         }
+        tempCtx.restore();
+
+        // Apply radial blur
+        const blurRadius = 3; // Adjust this value to control the blur intensity
+        const gradient = ctx.createRadialGradient(
+            centerX, centerY, 0,
+            centerX, centerY, clippingTileWidth / 4
+        );
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+        gradient.addColorStop(0.5, 'rgba(0, 0, 0, 1)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.translate(-centerX, -centerY);
+
+        ctx.save();
+        ctx.filter = `blur(${blurRadius}px)`;
+        ctx.drawImage(tempCanvas, 0, 0);
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, clippingTileWidth * 2, clippingTileWidth * 2);
+        ctx.restore();
+        
+        // Draw the original sharp image on top
+        ctx.drawImage(tempCanvas, 0, 0);
+
     }
 
     function drawTileOffscreen() {
@@ -375,7 +415,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const x = sampleX;
         const y = sampleY;
         // Create a clipping path
-        const radialExtension = Math.PI / 500;
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(-radialExtension / 2);
@@ -384,6 +423,9 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.arc(0, 0, clippingTileWidth, 0, Math.PI / 8 + radialExtension);
         ctx.lineTo(0, 0);
         ctx.restore();
+
+        // Apply transparency to the image
+        // ctx.globalAlpha = 0.7; // Adjust this value between 0 and 1 to control transparency
     }
 
     function drawHexagonalClippingPath(ctx) {
