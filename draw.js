@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let showThumbnail = false;
     let isGrayscale = true;
-    let isTiling = false;
     let isDragging = false;
     let isAminationMode = true;
     const radialStep = Math.PI / 720;
@@ -292,8 +291,6 @@ document.addEventListener('DOMContentLoaded', function() {
         gradient.addColorStop(0.5, 'rgba(0, 0, 0, 1)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
-        // ctx.translate(-centerX, -centerY);
-
         ctx.save();
         ctx.filter = `blur(${blurRadius}px)`;
         ctx.drawImage(tempCanvas, 0, 0);
@@ -316,9 +313,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         ctx.clearRect(0, 0, offscreenTileCanvas.width, offscreenTileCanvas.height);
 
-        const centerX = Math.floor(offscreenTileCanvas.width / 2);
-        const centerY = Math.floor(offscreenTileCanvas.height / 2);
-
         ctx.save();
         // draw tile at center of offscreen canvas
         drawCircularTile(ctx);
@@ -333,56 +327,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const ctx = kaleidoscopeCanvas.getContext('2d');
 
         ctx.clearRect(0, 0, kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
+        ctx.save();
+        ctx.translate(kaleidoscopeCanvas.width / 2, 
+                        kaleidoscopeCanvas.height / 2);
+        
+        const xScalingFactor = kaleidoscopeCanvas.width / offscreenTileCanvas.width;
+        const yScalingFactor = kaleidoscopeCanvas.height / offscreenTileCanvas.height;
+        const scalingFactor = Math.min(xScalingFactor, yScalingFactor);
 
-        if (isTiling) {
-
-            const downScaleFactor = isMobilePortrait() ? 1 : 0.5;
-
-            const gridXStep = downScaleFactor * offscreenTileCanvas.width;
-
-            const gridYStep = Math.sqrt(3) * downScaleFactor * clippingTileWidth;
-
-            const nrows = Math.ceil(kaleidoscopeCanvas.height / gridYStep) + 1;
-            const ncols = Math.ceil(kaleidoscopeCanvas.width / gridXStep) + 1;
-
-            ctx.save();
-            ctx.translate(-downScaleFactor * offscreenTileCanvas.width / 2, 
-                          -downScaleFactor * offscreenTileCanvas.height / 2);
-
-            for (let j = 0; j < nrows; j++) {
-                ctx.save();
-
-                ctx.translate(0, j * gridYStep);
-                if (j % 2 != 0) {
-                    ctx.translate(gridXStep / 2, 0);
-                }
-                for (let i = 0; i < ncols; i ++) {
-                    ctx.save();
-                    ctx.translate(i * gridXStep, 0);
-                    ctx.scale(downScaleFactor, downScaleFactor);
-                    ctx.drawImage(offscreenTileCanvas, 0, 0);
-                    ctx.restore();
-                }
-                ctx.restore();
-            }
-
-            ctx.restore();
-
-        } else {
-            ctx.save();
-            ctx.translate(kaleidoscopeCanvas.width / 2, 
-                          kaleidoscopeCanvas.height / 2);
-            
-            const xScalingFactor = kaleidoscopeCanvas.width / offscreenTileCanvas.width;
-            const yScalingFactor = kaleidoscopeCanvas.height / offscreenTileCanvas.height;
-            const scalingFactor = Math.min(xScalingFactor, yScalingFactor);
-
-            ctx.scale(scalingFactor, scalingFactor);
-            ctx.drawImage(offscreenTileCanvas, 
-                          -offscreenTileCanvas.width / 2, 
-                          -offscreenTileCanvas.height / 2);
-            ctx.restore();
-        }
+        ctx.scale(scalingFactor, scalingFactor);
+        ctx.drawImage(offscreenTileCanvas, 
+                        -offscreenTileCanvas.width / 2, 
+                        -offscreenTileCanvas.height / 2);
+        ctx.restore();
 
     }   
 
@@ -457,14 +414,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Call resizeCanvas on window resize
     window.addEventListener('resize', resizeCanvas);
-
-    // Add event listener for 't' key press
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'a' || event.key === 'A') {
-            isTiling = !isTiling;
-            draw();
-        }
-    });
 
     // Modify the event listener for 'g' key press
     document.addEventListener('keydown', function(event) {
