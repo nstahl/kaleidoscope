@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let thumbnailHeight;
 
     let showThumbnail = false;
-    let isCircular = true;
     let isGrayscale = true;
     let isTiling = false;
     let isDragging = false;
@@ -254,21 +253,6 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.drawImage(offscreenSrcImgCanvas, x, y, clippingTileWidth, clippingTileWidth, 0, 0, clippingTileWidth, clippingTileWidth);
     }
 
-    function drawHexagonalTile(ctx) {
-        const x = sampleX;
-        const y = sampleY;
-        for (let i = 0; i < 6; i++) {
-            ctx.save();
-            ctx.rotate(i * 2 * Math.PI / 3);
-            drawClippingTile(ctx, x, y);
-            ctx.save();
-            ctx.scale(1, -1);
-            drawClippingTile(ctx, x, y);
-            ctx.restore();
-            ctx.restore();
-        }
-    }
-
     function drawCircularTile(ctx) {
         const x = sampleX;
         const y = sampleY;
@@ -308,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
         gradient.addColorStop(0.5, 'rgba(0, 0, 0, 1)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
-        ctx.translate(-centerX, -centerY);
+        // ctx.translate(-centerX, -centerY);
 
         ctx.save();
         ctx.filter = `blur(${blurRadius}px)`;
@@ -336,13 +320,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const centerY = Math.floor(offscreenTileCanvas.height / 2);
 
         ctx.save();
-        ctx.translate(centerX, centerY);
         // draw tile at center of offscreen canvas
-        if (isCircular) {
-            drawCircularTile(ctx);
-        } else {
-            drawHexagonalTile(ctx);
-        }
+        drawCircularTile(ctx);
         ctx.restore();
     }
 
@@ -359,13 +338,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const downScaleFactor = isMobilePortrait() ? 1 : 0.5;
 
-            const gridXStep = isCircular ? 
-                                downScaleFactor * offscreenTileCanvas.width : 
-                                3 * downScaleFactor * offscreenTileCanvas.width / 2;
+            const gridXStep = downScaleFactor * offscreenTileCanvas.width;
 
-            const gridYStep = isCircular ?
-                                Math.sqrt(3) * downScaleFactor * clippingTileWidth :
-                                (Math.sqrt(3) / 2) * downScaleFactor * clippingTileWidth;
+            const gridYStep = Math.sqrt(3) * downScaleFactor * clippingTileWidth;
 
             const nrows = Math.ceil(kaleidoscopeCanvas.height / gridYStep) + 1;
             const ncols = Math.ceil(kaleidoscopeCanvas.width / gridXStep) + 1;
@@ -423,21 +398,6 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.arc(0, 0, clippingTileWidth, 0, Math.PI / 8 + radialExtension);
         ctx.lineTo(0, 0);
         ctx.restore();
-
-        // Apply transparency to the image
-        // ctx.globalAlpha = 0.7; // Adjust this value between 0 and 1 to control transparency
-    }
-
-    function drawHexagonalClippingPath(ctx) {
-        const x = sampleX;
-        const y = sampleY;
-        // Create a clipping path
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + clippingTileWidth, y);
-        ctx.lineTo(x + clippingTileWidth / 2, 
-                   y + (Math.sqrt(3) * clippingTileWidth / 2));
-        ctx.closePath();
     }
 
     function drawClipping() {
@@ -449,11 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear the entire canvas
         ctx.clearRect(0, 0, offscreenSrcImgCanvas.width, offscreenSrcImgCanvas.height);
 
-        if (isCircular) {
-            drawCircularClippingPath(ctx);
-        } else {
-            drawHexagonalClippingPath(ctx);
-        }
+        drawCircularClippingPath(ctx);
 
         ctx.clip();
         ctx.drawImage(sourceImage, 0, 0);
@@ -519,25 +475,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Add event listener for 'm' key press to switch between circular and hexagonal models
+    // Add event listener for 'a' to toggle between animation and static mode
     document.addEventListener('keydown', function(event) {
-        if (event.key === 'm' || event.key === 'M') {
-            isCircular = !isCircular;
-            console.log(`Switched to ${isCircular ? 'circular' : 'hexagonal'} model`);
+        if (event.key === 'p' || event.key === 'P') {
+            isAminationMode = !isAminationMode;
+            console.log(`Switched to ${isAminationMode ? 'animation' : 'static'} mode`);
             // Redraw the kaleidoscope with the updated model
             draw();
         }
     });
-
-        // Add event listener for 'a' to toggle between animation and static mode
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'p' || event.key === 'P') {
-                isAminationMode = !isAminationMode;
-                console.log(`Switched to ${isAminationMode ? 'animation' : 'static'} mode`);
-                // Redraw the kaleidoscope with the updated model
-                draw();
-            }
-        });
 
     document.addEventListener('keydown', function(event) {
         if (event.key === 't' || event.key === 'T') {
