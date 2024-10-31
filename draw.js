@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
           draw();
         });
         
-        sourceImage.src = "trees.jpeg";
+        sourceImage.src = "trees2.jpg";
     }
 
     function getSigmoidalSample(x) {
@@ -185,7 +185,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 currentRadians += radialStep;
                 const xSample = 10*getSinusoidalSample();
-                const firstDerivativeOfSigmoid = getSigmoidalSample(xSample) * (1 - getSigmoidalSample(xSample));
                 const vectorLength = getSigmoidalSample(xSample) * 250;
                 sampleX = offscreenSrcImgCanvas.width / 2 + Math.cos(currentRadians) * vectorLength;
                 sampleY = offscreenSrcImgCanvas.height / 2 + Math.sin(currentRadians) * vectorLength;
@@ -256,52 +255,68 @@ document.addEventListener('DOMContentLoaded', function() {
         const x = sampleX;
         const y = sampleY;
 
-        // Create a temporary canvas for the blurred image
-        const tempCanvas = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
-        const tempCtx = tempCanvas.getContext('2d');
+        const tempCanvasKaleidoscope = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
+        const tempCtxKaleidoscope = tempCanvasKaleidoscope.getContext('2d');
 
-        const centerX = Math.floor(tempCanvas.width / 2);
-        const centerY = Math.floor(tempCanvas.height / 2);
+        const centerX = Math.floor(tempCanvasKaleidoscope.width / 2);
+        const centerY = Math.floor(tempCanvasKaleidoscope.height / 2);
 
-        tempCtx.save();
-        tempCtx.translate(centerX, centerY);
+        tempCtxKaleidoscope.save();
+        tempCtxKaleidoscope.translate(centerX, centerY);
         // draw 16 clipping tiles in radial pattern
         for (let i = 0; i < 8; i++) {
-            tempCtx.save();
-            tempCtx.rotate(i * Math.PI / 4);
-            tempCtx.save();
-            tempCtx.rotate(-radialExtension / 2);
-            drawClippingTile(tempCtx, x, y);
-            tempCtx.restore();
-            tempCtx.save();
-            tempCtx.scale(1, -1);
-            drawClippingTile(tempCtx, x, y);
-            tempCtx.restore();
-            tempCtx.restore();
+            tempCtxKaleidoscope.save();
+            tempCtxKaleidoscope.rotate(i * Math.PI / 4);
+            tempCtxKaleidoscope.save();
+            tempCtxKaleidoscope.rotate(-radialExtension / 2);
+            drawClippingTile(tempCtxKaleidoscope, x, y);
+            tempCtxKaleidoscope.restore();
+            tempCtxKaleidoscope.save();
+            tempCtxKaleidoscope.scale(1, -1);
+            drawClippingTile(tempCtxKaleidoscope, x, y);
+            tempCtxKaleidoscope.restore();
+            tempCtxKaleidoscope.restore();
         }
-        tempCtx.restore();
+        tempCtxKaleidoscope.restore();
 
-        // Apply radial blur
-        const blurRadius = 3; // Adjust this value to control the blur intensity
-        const gradient = ctx.createRadialGradient(
+        // draw blurred core
+        const tempCanvasBlurredCore = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
+        const tempCtxBlurredCore = tempCanvasBlurredCore.getContext('2d');
+
+        const gradientInnerBlur = ctx.createRadialGradient(
             centerX, centerY, 0,
-            centerX, centerY, clippingTileWidth / 4
+            centerX, centerY, clippingTileWidth / 6
         );
-        gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
-        gradient.addColorStop(0.5, 'rgba(0, 0, 0, 1)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        gradientInnerBlur.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        gradientInnerBlur.addColorStop(.2, 'rgba(255, 255, 255, 1)');
+        gradientInnerBlur.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
-        ctx.save();
-        ctx.filter = `blur(${blurRadius}px)`;
-        ctx.drawImage(tempCanvas, 0, 0);
-        ctx.globalCompositeOperation = 'destination-in';
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, clippingTileWidth * 2, clippingTileWidth * 2);
-        ctx.restore();
-        
-        // Draw the original sharp image on top
-        ctx.drawImage(tempCanvas, 0, 0);
+        tempCtxBlurredCore.filter = `blur(2px)`;
+        tempCtxBlurredCore.fillStyle = gradientInnerBlur;
+        tempCtxBlurredCore.fillRect(0, 0, tempCanvasBlurredCore.width, tempCanvasBlurredCore.height);
+        // before you draw, define that you only want to draw where there is overlapping content
+        tempCtxBlurredCore.globalCompositeOperation = 'source-in';
+        tempCtxBlurredCore.drawImage(tempCanvasKaleidoscope, 0, 0);
 
+        //  draw fading boundary
+        const tempCanvasOuterFade = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
+        const tempCtxOuterFade = tempCanvasOuterFade.getContext('2d');
+
+        const gradientOuterFade = tempCtxOuterFade.createRadialGradient(
+            centerX, centerY, 0,
+            centerX, centerY, clippingTileWidth
+        );
+        gradientOuterFade.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        gradientOuterFade.addColorStop(.98, 'rgba(255, 255, 255, 1)');
+        gradientOuterFade.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        tempCtxOuterFade.fillStyle = gradientOuterFade;
+        tempCtxOuterFade.fillRect(0, 0, tempCanvasOuterFade.width, tempCanvasOuterFade.height);
+        // before you draw, define that you only want to draw where there is overlapping content
+        tempCtxOuterFade.globalCompositeOperation = 'source-in';
+        tempCtxOuterFade.drawImage(tempCanvasKaleidoscope, 0, 0);
+
+        ctx.drawImage(tempCanvasOuterFade, 0, 0);
+        // ctx.drawImage(tempCanvasBlurredCore, 0, 0);
     }
 
     function drawTileOffscreen() {
@@ -420,6 +435,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.key === 'g' || event.key === 'G') {
             isGrayscale = !isGrayscale;
             kaleidoscopeCanvas.classList.toggle('grayscale');
+            console.log(`Switched to ${isGrayscale ? 'grayscale' : 'color'}`);
             // No need to redraw the kaleidoscope
         }
     });
