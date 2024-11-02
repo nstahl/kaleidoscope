@@ -155,7 +155,9 @@ document.addEventListener('DOMContentLoaded', function() {
           draw();
         });
         
-        sourceImage.src = "trees2.jpg";
+        // sourceImage.src = "ny-bay.jpg";
+        sourceImage.src = "leafs.jpg";
+
     }
 
     function getSigmoidalSample(x) {
@@ -288,10 +290,10 @@ document.addEventListener('DOMContentLoaded', function() {
             centerX, centerY, clippingTileWidth / 6
         );
         gradientInnerBlur.addColorStop(0, 'rgba(255, 255, 255, 1)');
-        gradientInnerBlur.addColorStop(.2, 'rgba(255, 255, 255, 1)');
+        gradientInnerBlur.addColorStop(.8, 'rgba(255, 255, 255, 1)');
         gradientInnerBlur.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
-        tempCtxBlurredCore.filter = `blur(2px)`;
+        tempCtxBlurredCore.filter = `blur(3px)`;
         tempCtxBlurredCore.fillStyle = gradientInnerBlur;
         tempCtxBlurredCore.fillRect(0, 0, tempCanvasBlurredCore.width, tempCanvasBlurredCore.height);
         // before you draw, define that you only want to draw where there is overlapping content
