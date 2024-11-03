@@ -155,8 +155,8 @@ document.addEventListener('DOMContentLoaded', function() {
           draw();
         });
         
-        // sourceImage.src = "ny-bay.jpg";
-        sourceImage.src = "leafs.jpg";
+        sourceImage.src = "ny-bay.jpg";
+        // sourceImage.src = "leafs.jpg";
 
     }
 
@@ -253,6 +253,35 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.drawImage(offscreenSrcImgCanvas, x, y, clippingTileWidth, clippingTileWidth, 0, 0, clippingTileWidth, clippingTileWidth);
     }
 
+    function getAverageColorAtCenter(canvas) {
+        const ctx = canvas.getContext('2d');
+        const centerX = Math.floor(canvas.width / 2);
+        const centerY = Math.floor(canvas.height / 2);
+        const sampleSize = 100; // Sample a 5x5 pixel area
+        const halfSample = Math.floor(sampleSize / 2);
+        
+        const imageData = ctx.getImageData(
+            centerX - halfSample, 
+            centerY - halfSample, 
+            sampleSize, 
+            sampleSize
+        );
+        
+        let r = 0, g = 0, b = 0;
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            r += imageData.data[i];
+            g += imageData.data[i + 1];
+            b += imageData.data[i + 2];
+        }
+        
+        const pixelCount = sampleSize * sampleSize;
+        return {
+            r: Math.round(r / pixelCount),
+            g: Math.round(g / pixelCount),
+            b: Math.round(b / pixelCount)
+        };
+    }
+
     function drawCircularTile(ctx) {
         const x = sampleX;
         const y = sampleY;
@@ -285,20 +314,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const tempCanvasBlurredCore = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
         const tempCtxBlurredCore = tempCanvasBlurredCore.getContext('2d');
 
+        const avgColor = getAverageColorAtCenter(tempCanvasKaleidoscope);
+        const rgbaColor = `rgba(${avgColor.r}, ${avgColor.g}, ${avgColor.b}`;
+        
         const gradientInnerBlur = ctx.createRadialGradient(
             centerX, centerY, 0,
-            centerX, centerY, clippingTileWidth / 6
+            centerX, centerY, clippingTileWidth / 30
         );
-        gradientInnerBlur.addColorStop(0, 'rgba(255, 255, 255, 1)');
-        gradientInnerBlur.addColorStop(.8, 'rgba(255, 255, 255, 1)');
-        gradientInnerBlur.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        gradientInnerBlur.addColorStop(0, `${rgbaColor}, 1)`);
+        gradientInnerBlur.addColorStop(0.8, `${rgbaColor}, 1)`);
+        gradientInnerBlur.addColorStop(1, `${rgbaColor}, 0)`);
 
         tempCtxBlurredCore.filter = `blur(3px)`;
         tempCtxBlurredCore.fillStyle = gradientInnerBlur;
         tempCtxBlurredCore.fillRect(0, 0, tempCanvasBlurredCore.width, tempCanvasBlurredCore.height);
-        // before you draw, define that you only want to draw where there is overlapping content
-        tempCtxBlurredCore.globalCompositeOperation = 'source-in';
-        tempCtxBlurredCore.drawImage(tempCanvasKaleidoscope, 0, 0);
 
         //  draw fading boundary
         const tempCanvasOuterFade = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
@@ -318,7 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tempCtxOuterFade.drawImage(tempCanvasKaleidoscope, 0, 0);
 
         ctx.drawImage(tempCanvasOuterFade, 0, 0);
-        // ctx.drawImage(tempCanvasBlurredCore, 0, 0);
+        ctx.drawImage(tempCanvasBlurredCore, 0, 0);
     }
 
     function drawTileOffscreen() {
