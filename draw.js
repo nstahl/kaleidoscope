@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let thumbnailHeight;
 
     let showThumbnail = false;
-    let isGrayscale = true;
+    let isGrayscale = false;
     let isDragging = false;
     let isAminationMode = true;
     const radialStep = Math.PI / 720;
@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const ctx = canvas.getContext('2d');
         const centerX = Math.floor(canvas.width / 2);
         const centerY = Math.floor(canvas.height / 2);
-        const sampleSize = 100; // Sample a 5x5 pixel area
+        const sampleSize = 50; // Sample a 5x5 pixel area
         const halfSample = Math.floor(sampleSize / 2);
         
         const imageData = ctx.getImageData(
@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    function drawCircularTile(ctx) {
+    function drawCircle(ctx) {
         const x = sampleX;
         const y = sampleY;
 
@@ -294,6 +294,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
         tempCtxKaleidoscope.save();
         tempCtxKaleidoscope.translate(centerX, centerY);
+
+        tempCtxKaleidoscope.save();
+        tempCtxKaleidoscope.rotate(- Math.PI / 100);
+        for (let i = 0; i < 8; i++) {
+            tempCtxKaleidoscope.save();
+            tempCtxKaleidoscope.rotate(i * Math.PI / 4);
+            tempCtxKaleidoscope.save();
+            tempCtxKaleidoscope.rotate(-radialExtension / 2);
+            drawClippingTile(tempCtxKaleidoscope, x, y);
+            tempCtxKaleidoscope.restore();
+            tempCtxKaleidoscope.save();
+            tempCtxKaleidoscope.scale(1, -1);
+            drawClippingTile(tempCtxKaleidoscope, x, y);
+            tempCtxKaleidoscope.restore();
+            tempCtxKaleidoscope.restore();
+        }
+        tempCtxKaleidoscope.restore();
+
         // draw 16 clipping tiles in radial pattern
         for (let i = 0; i < 8; i++) {
             tempCtxKaleidoscope.save();
@@ -310,25 +328,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         tempCtxKaleidoscope.restore();
 
-        // draw blurred core
-        const tempCanvasBlurredCore = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
-        const tempCtxBlurredCore = tempCanvasBlurredCore.getContext('2d');
+        // draw inner dot
+        const tempCanvasInnerDot = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
+        const tempCtxInnerDot = tempCanvasInnerDot.getContext('2d');
 
         const avgColor = getAverageColorAtCenter(tempCanvasKaleidoscope);
         const rgbaColor = `rgba(${avgColor.r}, ${avgColor.g}, ${avgColor.b}`;
         
-        const gradientInnerBlur = ctx.createRadialGradient(
+        const gradientInnerDot = ctx.createRadialGradient(
             centerX, centerY, 0,
-            centerX, centerY, clippingTileWidth / 30
+            centerX, centerY, clippingTileWidth / 20
         );
         
-        gradientInnerBlur.addColorStop(0, `${rgbaColor}, 1)`);
-        gradientInnerBlur.addColorStop(0.8, `${rgbaColor}, 1)`);
-        gradientInnerBlur.addColorStop(1, `${rgbaColor}, 0)`);
+        gradientInnerDot.addColorStop(0, `${rgbaColor}, 1)`);
+        gradientInnerDot.addColorStop(0.8, `${rgbaColor}, 1)`);
+        gradientInnerDot.addColorStop(1, `${rgbaColor}, 0)`);
 
-        tempCtxBlurredCore.filter = `blur(3px)`;
-        tempCtxBlurredCore.fillStyle = gradientInnerBlur;
-        tempCtxBlurredCore.fillRect(0, 0, tempCanvasBlurredCore.width, tempCanvasBlurredCore.height);
+        tempCtxInnerDot.filter = `blur(3px)`;
+        tempCtxInnerDot.fillStyle = gradientInnerDot;
+        tempCtxInnerDot.fillRect(0, 0, tempCanvasInnerDot.width, tempCanvasInnerDot.height);
 
         //  draw fading boundary
         const tempCanvasOuterFade = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
@@ -348,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tempCtxOuterFade.drawImage(tempCanvasKaleidoscope, 0, 0);
 
         ctx.drawImage(tempCanvasOuterFade, 0, 0);
-        ctx.drawImage(tempCanvasBlurredCore, 0, 0);
+        ctx.drawImage(tempCanvasInnerDot, 0, 0);
     }
 
     function drawTileOffscreen() {
@@ -362,7 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         ctx.save();
         // draw tile at center of offscreen canvas
-        drawCircularTile(ctx);
+        drawCircle(ctx);
         ctx.restore();
     }
 
