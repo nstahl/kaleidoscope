@@ -33,10 +33,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentRadians = 0;
 
     let sigmoidSteepness = 0.275;
-    let oscillationFrequency = 0.00125;
+    let oscillationFrequency = 0.00075;
 
     let lastDrawTime = 0;
-    const drawInterval = 50; // 50 milliseconds
+    const drawInterval = 15; // 50 milliseconds
 
     const radialExtension = Math.PI / 100;
 
