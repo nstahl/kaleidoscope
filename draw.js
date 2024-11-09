@@ -40,6 +40,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const radialExtension = Math.PI / 100;
 
+    // Add near the top with other state variables
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let mouseStartX = 0;
+    let mouseEndX = 0;
+    const imageUrls = ["trees.jpeg", "leafs.jpg", "ny-bay.jpg", 
+                        "cold-spring.jpg", "hudson.jpg", "waterfall.png"]; // Add all your image URLs here
+    let currentImageIndex = 0;
+
     // Check if the browser supports canvas
     if (kaleidoscopeCanvas.getContext) {
         init();
@@ -92,6 +101,12 @@ document.addEventListener('DOMContentLoaded', function() {
         kaleidoscopeCanvas.addEventListener('touchmove', drag);
         kaleidoscopeCanvas.addEventListener('touchend', endDrag);
         kaleidoscopeCanvas.addEventListener('touchcancel', endDrag);
+
+        // Add swipe detection listeners for both touch and mouse
+        kaleidoscopeCanvas.addEventListener('touchstart', handleTouchStart);
+        kaleidoscopeCanvas.addEventListener('touchend', handleTouchEnd);
+        kaleidoscopeCanvas.addEventListener('mousedown', handleMouseStart);
+        kaleidoscopeCanvas.addEventListener('mouseup', handleMouseEnd);
     }
 
     function isMobilePortrait() {
@@ -131,33 +146,30 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('thumbnailHeight', thumbnailHeight);
     }
 
-    function loadImage() {
-        console.log('Load source image into offscreen canvas');
-
+    function loadImage(imageUrl) {
+        console.log('Loading imageUrl', imageUrl);
         const offscreenCtx = offscreenSrcImgCanvas.getContext('2d');
 
         sourceImage.addEventListener("load", () => {
-          // Set the offscreen canvas size to the source image size
-          offscreenSrcImgCanvas.width = sourceImage.width;
-          offscreenSrcImgCanvas.height = sourceImage.height;
+            // Set the offscreen canvas size to the source image size
+            offscreenSrcImgCanvas.width = sourceImage.width;
+            offscreenSrcImgCanvas.height = sourceImage.height;
 
-          // Calculate the scaling factor to convert kaleidoscope canvas coordinates to offscreen canvas coordinates
-          convertKaleidoscopeToOffscreenXCoords = offscreenSrcImgCanvas.width / kaleidoscopeCanvas.width;
-          convertKaleidoscopeToOffscreenYCoords = offscreenSrcImgCanvas.height / kaleidoscopeCanvas.height;
+            // Calculate the scaling factor to convert kaleidoscope canvas coordinates to offscreen canvas coordinates
+            convertKaleidoscopeToOffscreenXCoords = offscreenSrcImgCanvas.width / kaleidoscopeCanvas.width;
+            convertKaleidoscopeToOffscreenYCoords = offscreenSrcImgCanvas.height / kaleidoscopeCanvas.height;
 
-          // Clear the canvas before drawing
-          offscreenCtx.clearRect(0, 0, offscreenSrcImgCanvas.width, offscreenSrcImgCanvas.height);
+            // Clear the canvas before drawing
+            offscreenCtx.clearRect(0, 0, offscreenSrcImgCanvas.width, offscreenSrcImgCanvas.height);
 
-          console.log('Image loaded');
-          sampleX = offscreenSrcImgCanvas.width / 2;
-          sampleY = offscreenSrcImgCanvas.height / 2;
-          setupThumbnail();
-          draw();
+            console.log('Image loaded');
+            sampleX = offscreenSrcImgCanvas.width / 2;
+            sampleY = offscreenSrcImgCanvas.height / 2;
+            setupThumbnail();
+            draw();
         });
         
-        sourceImage.src = "ny-bay.jpg";
-        // sourceImage.src = "leafs.jpg";
-
+        sourceImage.src = imageUrl || imageUrls[currentImageIndex];
     }
 
     function getSigmoidalSample(x) {
@@ -550,5 +562,40 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Update touch handler functions and add mouse handler functions
+    function handleTouchStart(event) {
+        touchStartX = event.touches[0].clientX;
+        console.log('touchStartX', touchStartX);
+    }
+
+    function handleTouchEnd(event) {
+        touchEndX = event.changedTouches[0].clientX;
+        console.log('touchEndX', touchEndX);
+        handleSwipe(touchEndX - touchStartX);
+    }
+
+    function handleMouseStart(event) {
+        mouseStartX = event.clientX;
+        console.log('mouseStartX', mouseStartX);
+    }
+
+    function handleMouseEnd(event) {
+        mouseEndX = event.clientX;
+        console.log('mouseEndX', mouseEndX);
+        handleSwipe(mouseEndX - mouseStartX);
+    }
+
+    function handleSwipe(swipeDistance) {
+        console.log('handleSwipe', swipeDistance);
+        const swipeThreshold = -50; // Minimum distance for a swipe
+
+        if (swipeDistance < swipeThreshold) {
+            // Swipe right detected
+            console.log('Swipe right detected');
+            currentImageIndex = (currentImageIndex + 1) % imageUrls.length;
+            loadImage(imageUrls[currentImageIndex]);
+        }
+    }
 
 });
