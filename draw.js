@@ -26,9 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let thumbnailHeight;
 
     let showThumbnail = false;
-    let isCircular = true;
-    let isGrayscale = true;
-    let isTiling = false;
+    let isGrayscale = false;
     let isDragging = false;
     let isAminationMode = true;
     const radialStep = Math.PI / 720;
@@ -157,7 +155,9 @@ document.addEventListener('DOMContentLoaded', function() {
           draw();
         });
         
-        sourceImage.src = "trees.jpeg";
+        sourceImage.src = "ny-bay.jpg";
+        // sourceImage.src = "leafs.jpg";
+
     }
 
     function getSigmoidalSample(x) {
@@ -187,7 +187,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 currentRadians += radialStep;
                 const xSample = 10*getSinusoidalSample();
-                const firstDerivativeOfSigmoid = getSigmoidalSample(xSample) * (1 - getSigmoidalSample(xSample));
                 const vectorLength = getSigmoidalSample(xSample) * 250;
                 sampleX = offscreenSrcImgCanvas.width / 2 + Math.cos(currentRadians) * vectorLength;
                 sampleY = offscreenSrcImgCanvas.height / 2 + Math.sin(currentRadians) * vectorLength;
@@ -254,73 +253,120 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.drawImage(offscreenSrcImgCanvas, x, y, clippingTileWidth, clippingTileWidth, 0, 0, clippingTileWidth, clippingTileWidth);
     }
 
-    function drawHexagonalTile(ctx) {
-        const x = sampleX;
-        const y = sampleY;
-        for (let i = 0; i < 6; i++) {
-            ctx.save();
-            ctx.rotate(i * 2 * Math.PI / 3);
-            drawClippingTile(ctx, x, y);
-            ctx.save();
-            ctx.scale(1, -1);
-            drawClippingTile(ctx, x, y);
-            ctx.restore();
-            ctx.restore();
+    function getAverageColorAtCenter(canvas) {
+        const ctx = canvas.getContext('2d');
+        const centerX = Math.floor(canvas.width / 2);
+        const centerY = Math.floor(canvas.height / 2);
+        const sampleSize = 50; // Sample a 5x5 pixel area
+        const halfSample = Math.floor(sampleSize / 2);
+        
+        const imageData = ctx.getImageData(
+            centerX - halfSample, 
+            centerY - halfSample, 
+            sampleSize, 
+            sampleSize
+        );
+        
+        let r = 0, g = 0, b = 0;
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            r += imageData.data[i];
+            g += imageData.data[i + 1];
+            b += imageData.data[i + 2];
         }
+        
+        const pixelCount = sampleSize * sampleSize;
+        return {
+            r: Math.round(r / pixelCount),
+            g: Math.round(g / pixelCount),
+            b: Math.round(b / pixelCount)
+        };
     }
 
-    function drawCircularTile(ctx) {
+    function drawCircle(ctx) {
         const x = sampleX;
         const y = sampleY;
 
-        // Create a temporary canvas for the blurred image
-        const tempCanvas = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
-        const tempCtx = tempCanvas.getContext('2d');
+        const tempCanvasKaleidoscope = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
+        const tempCtxKaleidoscope = tempCanvasKaleidoscope.getContext('2d');
 
-        const centerX = Math.floor(tempCanvas.width / 2);
-        const centerY = Math.floor(tempCanvas.height / 2);
+        const centerX = Math.floor(tempCanvasKaleidoscope.width / 2);
+        const centerY = Math.floor(tempCanvasKaleidoscope.height / 2);
 
-        tempCtx.save();
-        tempCtx.translate(centerX, centerY);
+        tempCtxKaleidoscope.save();
+        tempCtxKaleidoscope.translate(centerX, centerY);
+
+        tempCtxKaleidoscope.save();
+        tempCtxKaleidoscope.rotate(- Math.PI / 100);
+        for (let i = 0; i < 8; i++) {
+            tempCtxKaleidoscope.save();
+            tempCtxKaleidoscope.rotate(i * Math.PI / 4);
+            tempCtxKaleidoscope.save();
+            tempCtxKaleidoscope.rotate(-radialExtension / 2);
+            drawClippingTile(tempCtxKaleidoscope, x, y);
+            tempCtxKaleidoscope.restore();
+            tempCtxKaleidoscope.save();
+            tempCtxKaleidoscope.scale(1, -1);
+            drawClippingTile(tempCtxKaleidoscope, x, y);
+            tempCtxKaleidoscope.restore();
+            tempCtxKaleidoscope.restore();
+        }
+        tempCtxKaleidoscope.restore();
+
         // draw 16 clipping tiles in radial pattern
         for (let i = 0; i < 8; i++) {
-            tempCtx.save();
-            tempCtx.rotate(i * Math.PI / 4);
-            tempCtx.save();
-            tempCtx.rotate(-radialExtension / 2);
-            drawClippingTile(tempCtx, x, y);
-            tempCtx.restore();
-            tempCtx.save();
-            tempCtx.scale(1, -1);
-            drawClippingTile(tempCtx, x, y);
-            tempCtx.restore();
-            tempCtx.restore();
+            tempCtxKaleidoscope.save();
+            tempCtxKaleidoscope.rotate(i * Math.PI / 4);
+            tempCtxKaleidoscope.save();
+            tempCtxKaleidoscope.rotate(-radialExtension / 2);
+            drawClippingTile(tempCtxKaleidoscope, x, y);
+            tempCtxKaleidoscope.restore();
+            tempCtxKaleidoscope.save();
+            tempCtxKaleidoscope.scale(1, -1);
+            drawClippingTile(tempCtxKaleidoscope, x, y);
+            tempCtxKaleidoscope.restore();
+            tempCtxKaleidoscope.restore();
         }
-        tempCtx.restore();
+        tempCtxKaleidoscope.restore();
 
-        // Apply radial blur
-        const blurRadius = 3; // Adjust this value to control the blur intensity
-        const gradient = ctx.createRadialGradient(
-            centerX, centerY, 0,
-            centerX, centerY, clippingTileWidth / 4
-        );
-        gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
-        gradient.addColorStop(0.5, 'rgba(0, 0, 0, 1)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        // draw inner dot
+        const tempCanvasInnerDot = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
+        const tempCtxInnerDot = tempCanvasInnerDot.getContext('2d');
 
-        ctx.translate(-centerX, -centerY);
-
-        ctx.save();
-        ctx.filter = `blur(${blurRadius}px)`;
-        ctx.drawImage(tempCanvas, 0, 0);
-        ctx.globalCompositeOperation = 'destination-in';
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, clippingTileWidth * 2, clippingTileWidth * 2);
-        ctx.restore();
+        const avgColor = getAverageColorAtCenter(tempCanvasKaleidoscope);
+        const rgbaColor = `rgba(${avgColor.r}, ${avgColor.g}, ${avgColor.b}`;
         
-        // Draw the original sharp image on top
-        ctx.drawImage(tempCanvas, 0, 0);
+        const gradientInnerDot = ctx.createRadialGradient(
+            centerX, centerY, 0,
+            centerX, centerY, clippingTileWidth / 20
+        );
+        
+        gradientInnerDot.addColorStop(0, `${rgbaColor}, 1)`);
+        gradientInnerDot.addColorStop(0.8, `${rgbaColor}, 1)`);
+        gradientInnerDot.addColorStop(1, `${rgbaColor}, 0)`);
 
+        tempCtxInnerDot.filter = `blur(3px)`;
+        tempCtxInnerDot.fillStyle = gradientInnerDot;
+        tempCtxInnerDot.fillRect(0, 0, tempCanvasInnerDot.width, tempCanvasInnerDot.height);
+
+        //  draw fading boundary
+        const tempCanvasOuterFade = new OffscreenCanvas(offscreenTileCanvas.width, offscreenTileCanvas.height);
+        const tempCtxOuterFade = tempCanvasOuterFade.getContext('2d');
+
+        const gradientOuterFade = tempCtxOuterFade.createRadialGradient(
+            centerX, centerY, 0,
+            centerX, centerY, clippingTileWidth
+        );
+        gradientOuterFade.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        gradientOuterFade.addColorStop(.98, 'rgba(255, 255, 255, 1)');
+        gradientOuterFade.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        tempCtxOuterFade.fillStyle = gradientOuterFade;
+        tempCtxOuterFade.fillRect(0, 0, tempCanvasOuterFade.width, tempCanvasOuterFade.height);
+        // before you draw, define that you only want to draw where there is overlapping content
+        tempCtxOuterFade.globalCompositeOperation = 'source-in';
+        tempCtxOuterFade.drawImage(tempCanvasKaleidoscope, 0, 0);
+
+        ctx.drawImage(tempCanvasOuterFade, 0, 0);
+        ctx.drawImage(tempCanvasInnerDot, 0, 0);
     }
 
     function drawTileOffscreen() {
@@ -332,17 +378,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         ctx.clearRect(0, 0, offscreenTileCanvas.width, offscreenTileCanvas.height);
 
-        const centerX = Math.floor(offscreenTileCanvas.width / 2);
-        const centerY = Math.floor(offscreenTileCanvas.height / 2);
-
         ctx.save();
-        ctx.translate(centerX, centerY);
         // draw tile at center of offscreen canvas
-        if (isCircular) {
-            drawCircularTile(ctx);
-        } else {
-            drawHexagonalTile(ctx);
-        }
+        drawCircle(ctx);
         ctx.restore();
     }
 
@@ -354,60 +392,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const ctx = kaleidoscopeCanvas.getContext('2d');
 
         ctx.clearRect(0, 0, kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
+        ctx.save();
+        ctx.translate(kaleidoscopeCanvas.width / 2, 
+                        kaleidoscopeCanvas.height / 2);
+        
+        const xScalingFactor = kaleidoscopeCanvas.width / offscreenTileCanvas.width;
+        const yScalingFactor = kaleidoscopeCanvas.height / offscreenTileCanvas.height;
+        const scalingFactor = Math.min(xScalingFactor, yScalingFactor);
 
-        if (isTiling) {
-
-            const downScaleFactor = isMobilePortrait() ? 1 : 0.5;
-
-            const gridXStep = isCircular ? 
-                                downScaleFactor * offscreenTileCanvas.width : 
-                                3 * downScaleFactor * offscreenTileCanvas.width / 2;
-
-            const gridYStep = isCircular ?
-                                Math.sqrt(3) * downScaleFactor * clippingTileWidth :
-                                (Math.sqrt(3) / 2) * downScaleFactor * clippingTileWidth;
-
-            const nrows = Math.ceil(kaleidoscopeCanvas.height / gridYStep) + 1;
-            const ncols = Math.ceil(kaleidoscopeCanvas.width / gridXStep) + 1;
-
-            ctx.save();
-            ctx.translate(-downScaleFactor * offscreenTileCanvas.width / 2, 
-                          -downScaleFactor * offscreenTileCanvas.height / 2);
-
-            for (let j = 0; j < nrows; j++) {
-                ctx.save();
-
-                ctx.translate(0, j * gridYStep);
-                if (j % 2 != 0) {
-                    ctx.translate(gridXStep / 2, 0);
-                }
-                for (let i = 0; i < ncols; i ++) {
-                    ctx.save();
-                    ctx.translate(i * gridXStep, 0);
-                    ctx.scale(downScaleFactor, downScaleFactor);
-                    ctx.drawImage(offscreenTileCanvas, 0, 0);
-                    ctx.restore();
-                }
-                ctx.restore();
-            }
-
-            ctx.restore();
-
-        } else {
-            ctx.save();
-            ctx.translate(kaleidoscopeCanvas.width / 2, 
-                          kaleidoscopeCanvas.height / 2);
-            
-            const xScalingFactor = kaleidoscopeCanvas.width / offscreenTileCanvas.width;
-            const yScalingFactor = kaleidoscopeCanvas.height / offscreenTileCanvas.height;
-            const scalingFactor = Math.min(xScalingFactor, yScalingFactor);
-
-            ctx.scale(scalingFactor, scalingFactor);
-            ctx.drawImage(offscreenTileCanvas, 
-                          -offscreenTileCanvas.width / 2, 
-                          -offscreenTileCanvas.height / 2);
-            ctx.restore();
-        }
+        ctx.scale(scalingFactor, scalingFactor);
+        ctx.drawImage(offscreenTileCanvas, 
+                        -offscreenTileCanvas.width / 2, 
+                        -offscreenTileCanvas.height / 2);
+        ctx.restore();
 
     }   
 
@@ -423,21 +420,6 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.arc(0, 0, clippingTileWidth, 0, Math.PI / 8 + radialExtension);
         ctx.lineTo(0, 0);
         ctx.restore();
-
-        // Apply transparency to the image
-        // ctx.globalAlpha = 0.7; // Adjust this value between 0 and 1 to control transparency
-    }
-
-    function drawHexagonalClippingPath(ctx) {
-        const x = sampleX;
-        const y = sampleY;
-        // Create a clipping path
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + clippingTileWidth, y);
-        ctx.lineTo(x + clippingTileWidth / 2, 
-                   y + (Math.sqrt(3) * clippingTileWidth / 2));
-        ctx.closePath();
     }
 
     function drawClipping() {
@@ -449,11 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear the entire canvas
         ctx.clearRect(0, 0, offscreenSrcImgCanvas.width, offscreenSrcImgCanvas.height);
 
-        if (isCircular) {
-            drawCircularClippingPath(ctx);
-        } else {
-            drawHexagonalClippingPath(ctx);
-        }
+        drawCircularClippingPath(ctx);
 
         ctx.clip();
         ctx.drawImage(sourceImage, 0, 0);
@@ -502,42 +480,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Call resizeCanvas on window resize
     window.addEventListener('resize', resizeCanvas);
 
-    // Add event listener for 't' key press
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'a' || event.key === 'A') {
-            isTiling = !isTiling;
-            draw();
-        }
-    });
-
     // Modify the event listener for 'g' key press
     document.addEventListener('keydown', function(event) {
         if (event.key === 'g' || event.key === 'G') {
             isGrayscale = !isGrayscale;
             kaleidoscopeCanvas.classList.toggle('grayscale');
+            console.log(`Switched to ${isGrayscale ? 'grayscale' : 'color'}`);
             // No need to redraw the kaleidoscope
         }
     });
 
-    // Add event listener for 'm' key press to switch between circular and hexagonal models
+    // Add event listener for 'a' to toggle between animation and static mode
     document.addEventListener('keydown', function(event) {
-        if (event.key === 'm' || event.key === 'M') {
-            isCircular = !isCircular;
-            console.log(`Switched to ${isCircular ? 'circular' : 'hexagonal'} model`);
+        if (event.key === 'p' || event.key === 'P') {
+            isAminationMode = !isAminationMode;
+            console.log(`Switched to ${isAminationMode ? 'animation' : 'static'} mode`);
             // Redraw the kaleidoscope with the updated model
             draw();
         }
     });
-
-        // Add event listener for 'a' to toggle between animation and static mode
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'p' || event.key === 'P') {
-                isAminationMode = !isAminationMode;
-                console.log(`Switched to ${isAminationMode ? 'animation' : 'static'} mode`);
-                // Redraw the kaleidoscope with the updated model
-                draw();
-            }
-        });
 
     document.addEventListener('keydown', function(event) {
         if (event.key === 't' || event.key === 'T') {
