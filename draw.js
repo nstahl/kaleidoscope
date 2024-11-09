@@ -45,6 +45,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let touchEndX = 0;
     let mouseStartX = 0;
     let mouseEndX = 0;
+    let touchStartY = 0;
+    let touchEndY = 0;
+    let mouseStartY = 0;
+    let mouseEndY = 0;
     const imageUrls = ["trees.jpeg", "leafs.jpg", "ny-bay.jpg", 
                         "cold-spring.jpg", "hudson.jpg", "waterfall.png"]; // Add all your image URLs here
     let currentImageIndex = 0;
@@ -566,35 +570,77 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update touch handler functions and add mouse handler functions
     function handleTouchStart(event) {
         touchStartX = event.touches[0].clientX;
-        console.log('touchStartX', touchStartX);
+        touchStartY = event.touches[0].clientY;
+        console.log('touchStartX', touchStartX, 'touchStartY', touchStartY);
     }
 
     function handleTouchEnd(event) {
         touchEndX = event.changedTouches[0].clientX;
-        console.log('touchEndX', touchEndX);
-        handleSwipe(touchEndX - touchStartX);
+        touchEndY = event.changedTouches[0].clientY;
+        console.log('touchEndX', touchEndX, 'touchEndY', touchEndY);
+        
+        // Calculate horizontal and vertical distances
+        const horizontalSwipe = touchEndX - touchStartX;
+        const verticalSwipe = touchEndY - touchStartY;
+        
+        // If vertical movement is greater than horizontal, handle as vertical swipe
+        if (Math.abs(verticalSwipe) > Math.abs(horizontalSwipe)) {
+            handleVerticalSwipe(verticalSwipe);
+        } else {
+            handleHorizontalSwipe(horizontalSwipe);
+        }
     }
 
     function handleMouseStart(event) {
         mouseStartX = event.clientX;
-        console.log('mouseStartX', mouseStartX);
+        mouseStartY = event.clientY;
+        console.log('mouseStartX', mouseStartX, 'mouseStartY', mouseStartY);
     }
 
     function handleMouseEnd(event) {
         mouseEndX = event.clientX;
-        console.log('mouseEndX', mouseEndX);
-        handleSwipe(mouseEndX - mouseStartX);
+        mouseEndY = event.clientY;
+        console.log('mouseEndX', mouseEndX, 'mouseEndY', mouseEndY);
+        
+        // Calculate horizontal and vertical distances
+        const horizontalSwipe = mouseEndX - mouseStartX;
+        const verticalSwipe = mouseEndY - mouseStartY;
+        
+        // If vertical movement is greater than horizontal, handle as vertical swipe
+        if (Math.abs(verticalSwipe) > Math.abs(horizontalSwipe)) {
+            handleVerticalSwipe(verticalSwipe);
+        } else {
+            handleHorizontalSwipe(horizontalSwipe);
+        }
     }
 
-    function handleSwipe(swipeDistance) {
-        console.log('handleSwipe', swipeDistance);
-        const swipeThreshold = -50; // Minimum distance for a swipe
+    function handleHorizontalSwipe(swipeDistance) {
+        console.log('handleHorizontalSwipe', swipeDistance);
+        const swipeThreshold = 50; // Minimum distance for a swipe (positive value)
 
-        if (swipeDistance < swipeThreshold) {
-            // Swipe right detected
-            console.log('Swipe right detected');
-            currentImageIndex = (currentImageIndex + 1) % imageUrls.length;
+        if (Math.abs(swipeDistance) > swipeThreshold) {
+            if (swipeDistance > 0) {
+                // Swipe right detected - go to previous image
+                console.log('Swipe right detected');
+                currentImageIndex = (currentImageIndex - 1 + imageUrls.length) % imageUrls.length;
+            } else {
+                // Swipe left detected - go to next image
+                console.log('Swipe left detected');
+                currentImageIndex = (currentImageIndex + 1) % imageUrls.length;
+            }
             loadImage(imageUrls[currentImageIndex]);
+        }
+    }
+
+    function handleVerticalSwipe(swipeDistance) {
+        console.log('handleVerticalSwipe', swipeDistance);
+        const swipeThreshold = 50; // Minimum distance for a swipe
+
+        if (Math.abs(swipeDistance) > swipeThreshold) {
+            // Toggle grayscale mode
+            isGrayscale = !isGrayscale;
+            kaleidoscopeCanvas.classList.toggle('grayscale');
+            console.log(`Switched to ${isGrayscale ? 'grayscale' : 'color'}`);
         }
     }
 
