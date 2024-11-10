@@ -53,6 +53,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         "cold-spring.jpg", "hudson.jpg", "waterfall.png"]; // Add all your image URLs here
     let currentImageIndex = 0;
 
+    // Add new function to handle image uploads
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const imageUrl = URL.createObjectURL(file);
+            imageUrls.push(imageUrl);
+            currentImageIndex = imageUrls.length - 1;
+            loadImage(imageUrl);
+        }
+    }
+
     // Check if the browser supports canvas
     if (kaleidoscopeCanvas.getContext) {
         init();
@@ -111,6 +122,12 @@ document.addEventListener('DOMContentLoaded', function() {
         kaleidoscopeCanvas.addEventListener('touchend', handleTouchEnd);
         kaleidoscopeCanvas.addEventListener('mousedown', handleMouseStart);
         kaleidoscopeCanvas.addEventListener('mouseup', handleMouseEnd);
+
+        // Add file input listener
+        const fileInput = document.getElementById('imageUpload');
+        if (fileInput) {
+            fileInput.addEventListener('change', handleImageUpload);
+        }
     }
 
     function isMobilePortrait() {
@@ -643,5 +660,12 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`Switched to ${isGrayscale ? 'grayscale' : 'color'}`);
         }
     }
+
+    document.getElementById('file-input').addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+          const file = e.target.files[0];
+          handleImageUpload(e);
+        }
+    });
 
 });
