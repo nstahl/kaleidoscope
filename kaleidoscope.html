@@ -46,6 +46,27 @@
     #fullscreen-btn:hover {
       background-color: rgba(255, 255, 255, 0.5);
     }
+
+    #upload-btn {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 10;
+      padding: 10px;
+      background-color: rgba(255, 255, 255, 0.3);
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-family: 'Courier New', Courier, monospace;
+    }
+
+    #upload-btn:hover {
+      background-color: rgba(255, 255, 255, 0.5);
+    }
+
+    #file-input {
+      display: none;
+    }
   </style>
 
 
@@ -57,6 +78,8 @@
   <div class="canvas-container">
     <canvas id="kaleidoscope_canvas" role="presentation" width="1400" height="700"></canvas>
     <button id="fullscreen-btn">Full Screen</button>
+    <input type="file" id="file-input" accept="image/*">
+    <button id="upload-btn">Upload Image</button>
   </div>
 
   <script src="draw.js"></script>
@@ -73,6 +96,11 @@
         canvas.msRequestFullscreen();
       }
     });
+
+    document.getElementById('upload-btn').addEventListener('click', function() {
+      document.getElementById('file-input').click();
+    });
+
   </script>
 </body>
 
