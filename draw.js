@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let touchEndY = 0;
     let mouseStartY = 0;
     let mouseEndY = 0;
-    const imageUrls = ["pond.jpg", "trees.jpeg", "leafs.jpg", "ny-bay.jpg", 
+    const imageUrls = ["zurich-art.jpg", "soccer-player.jpg", "judy.jpg", "trees.jpeg", "leafs.jpg", "ny-bay.jpg", 
                         "cold-spring.jpg", "hudson.jpg", "waterfall.png"]; // Add all your image URLs here
     let currentImageIndex = 0;
 
