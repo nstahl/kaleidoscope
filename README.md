@@ -3,6 +3,10 @@ kaleidoscope
 
 Kaleidoscopic image transformations for your webbrowser.
 
+Checkout a hosted version on my [github pages](https://nstahl.github.io/kaleidoscope/kaleidoscope.html).
+
+> Swipe right or left for the next image, up or down to toggle between colors and grayscale.
+
 ## Running the Dev Server
 
 To run a local development server and view the kaleidoscope experience, follow these steps:
@@ -22,5 +26,3 @@ To run a local development server and view the kaleidoscope experience, follow t
    ```
 
 This will launch the kaleidoscope experience in your default web browser.
-
-
