@@ -49,8 +49,11 @@ document.addEventListener('DOMContentLoaded', function() {
     let touchEndY = 0;
     let mouseStartY = 0;
     let mouseEndY = 0;
-    const imageUrls = ["zurich-art.jpg", "soccer-player.jpg", "judy.jpg", "trees.jpeg", "leafs.jpg", "ny-bay.jpg", 
-                        "cold-spring.jpg", "hudson.jpg", "waterfall.png"]; // Add all your image URLs here
+
+    const imageUrls = ["source-images/zurich-art.jpg", "source-images/soccer-player.jpg", "source-images/judy.jpg", 
+                       "source-images/trees.jpeg", "source-images/leafs.jpg", "source-images/ny-bay.jpg", 
+                       "source-images/cold-spring.jpg", "source-images/hudson.jpg", "source-images/waterfall.png"];
+
     let currentImageIndex = 0;
 
     // Add new function to handle image uploads
