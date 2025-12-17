@@ -9,6 +9,10 @@ Checkout a hosted version on my [github pages](https://nstahl.github.io/kaleidos
 
 > Swipe right or left for the next image, up or down to toggle between colors and grayscale.
 
+## Background
+
+This is a HTML canvas version of the original version that I built with my sister pre-2014. LLM assistants helped me plan and write the code.
+
 ## Running the Dev Server
 
 To run a local development server and view the kaleidoscope experience, follow these steps:
