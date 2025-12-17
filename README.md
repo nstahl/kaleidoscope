@@ -3,6 +3,8 @@ kaleidoscope
 
 Kaleidoscopic image transformations for your webbrowser.
 
+![Demo screenshot](kaleidoscope.png)
+
 Checkout a hosted version on my [github pages](https://nstahl.github.io/kaleidoscope/kaleidoscope.html).
 
 > Swipe right or left for the next image, up or down to toggle between colors and grayscale.
